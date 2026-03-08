@@ -2,7 +2,7 @@ import { GitCommit } from "lucide-react";
 import { GitService } from "../services/gitService";
 import { GitActivityCalendar } from "./GitActivityCalendar";
 
-export const GitDashboard = ({ project, gitDetails, fetchGitData, onCommitOpen }) => {
+export const GitDashboard = ({ project, gitDetails, fetchGitData, onCommitOpen, onStatusOpen }) => {
     const handleGitAdd = async () => {
         try {
             await GitService.gitAdd(project.path);
@@ -23,6 +23,10 @@ export const GitDashboard = ({ project, gitDetails, fetchGitData, onCommitOpen }
         } catch (error) {
             alert("Git push başarısız: " + error);
         }
+    };
+
+    const handleGitStatus = async () => {
+        onStatusOpen();
     };
 
     return (
@@ -60,6 +64,12 @@ export const GitDashboard = ({ project, gitDetails, fetchGitData, onCommitOpen }
                         className="w-full flex justify-center items-center gap-2 px-4 py-3 bg-zinc-100 dark:bg-zinc-800/80 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-600 dark:text-purple-400 border border-zinc-200 dark:border-zinc-700 hover:border-purple-300 dark:hover:border-purple-700 rounded-xl text-sm font-medium transition-colors cursor-pointer"
                     >
                         Git Push
+                    </button>
+                    <button
+                        onClick={handleGitStatus}
+                        className="w-full flex justify-center items-center gap-2 px-4 py-3 bg-zinc-100 dark:bg-zinc-800/80 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-600 dark:text-purple-400 border border-zinc-200 dark:border-zinc-700 hover:border-purple-300 dark:hover:border-purple-700 rounded-xl text-sm font-medium transition-colors cursor-pointer"
+                    >
+                        Git Status
                     </button>
                 </div>
 

@@ -191,6 +191,20 @@ impl GitService {
         }
     }
 
+    pub fn git_status(path: &str) -> Result<String, String> {
+        let output = Command::new("git")
+            .current_dir(path)
+            .args(["status"])
+            .output()
+            .map_err(|e| e.to_string())?;
+
+        if output.status.success() {
+            Ok(String::from_utf8_lossy(&output.stdout).to_string())
+        } else {
+            Err(String::from_utf8_lossy(&output.stderr).to_string())
+        }
+    }
+
     // Git Stash Komutu
     pub fn git_stash(path: &str) -> Result<(), String> {
         let output = Command::new("git")

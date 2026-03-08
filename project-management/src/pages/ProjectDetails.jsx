@@ -13,6 +13,7 @@ import { ScrollArea } from "../components/ScrollArea";
 import { IdeNotFoundModal } from "../components/IdeNotFoundModal";
 import { GitCheckoutErrorModal } from "../components/GitCheckoutErrorModal";
 import { GitSetupWizard } from "../components/GitSetupWizard";
+import { GitStatusModal } from "../components/GitStatusModal";
 
 // Recursive olarak Ağaç Yapısını Çizen Component
 const FileNodeItem = ({ node }) => {
@@ -69,6 +70,8 @@ export const ProjectDetails = () => {
     const [isCommitModalOpen, setIsCommitModalOpen] = useState(false);
     const [notFoundIdeName, setNotFoundIdeName] = useState(null);
     const [checkoutErrorData, setCheckoutErrorData] = useState(null);
+    const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+    const [statusOutput, setStatusOutput] = useState("");
 
     const getIdeDisplayName = (ideId) => {
         const ides = {
@@ -169,6 +172,16 @@ export const ProjectDetails = () => {
     const handleOpenIdeFromError = () => {
         setCheckoutErrorData(null);
         setIsModalOpen(true);
+    };
+
+    const handleOpenStatus = async () => {
+        try {
+            const output = await GitService.gitStatus(project.path);
+            setStatusOutput(output);
+            setIsStatusModalOpen(true);
+        } catch (error) {
+            alert("Git status alınamadı: " + error);
+        }
     };
 
     if (!project) return null;
@@ -284,6 +297,7 @@ export const ProjectDetails = () => {
                                 gitDetails={gitDetails}
                                 fetchGitData={fetchGitData}
                                 onCommitOpen={() => setIsCommitModalOpen(true)}
+                                onStatusOpen={handleOpenStatus}
                             />
 
                             {/* İki Kolonlu Alt Kısım */}
@@ -361,6 +375,13 @@ export const ProjectDetails = () => {
                 isOpen={isCommitModalOpen}
                 onClose={() => setIsCommitModalOpen(false)}
                 onCommit={submitCommit}
+            />
+
+            {/* Git Status Modalı */}
+            <GitStatusModal
+                isOpen={isStatusModalOpen}
+                statusOutput={statusOutput}
+                onClose={() => setIsStatusModalOpen(false)}
             />
         </div>
     );

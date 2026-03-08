@@ -72,3 +72,8 @@ pub fn git_remote_add(path: String, url: String) -> Result<(), String> {
 pub fn git_push_initial(path: String) -> Result<(), String> {
     GitService::git_push_initial(&path)
 }
+
+#[tauri::command]
+pub fn git_status(path: String) -> Result<String, String> {
+    GitService::git_status(&path)
+}

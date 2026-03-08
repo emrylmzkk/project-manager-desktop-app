@@ -92,5 +92,14 @@ export const GitService = {
             console.error("Git initial push hatasi:", error);
             throw error;
         }
+    },
+
+    async gitStatus(path) {
+        try {
+            return await invoke("git_status", { path });
+        } catch (error) {
+            console.error("Git status hatasi:", error);
+            throw error;
+        }
     }
 }
