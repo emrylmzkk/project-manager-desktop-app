@@ -1,6 +1,5 @@
 use crate::models::git_model::{GitActivity, GitCommit, GitDetails};
 use std::collections::HashMap;
-use std::process::Command;
 
 pub struct GitService;
 
@@ -24,7 +23,7 @@ impl GitService {
 
     // Aktif Branch'ı bulur
     fn get_current_branch(path: &str) -> Result<String, String> {
-        let output = Command::new("git")
+        let output = crate::services::create_command("git")
             .current_dir(path)
             .args(["rev-parse", "--abbrev-ref", "HEAD"])
             .output()
@@ -39,7 +38,7 @@ impl GitService {
 
     // Remote URL'i bulur
     fn get_remote_url(path: &str) -> Option<String> {
-        let output = Command::new("git")
+        let output = crate::services::create_command("git")
             .current_dir(path)
             .args(["config", "--get", "remote.origin.url"])
             .output()
@@ -56,7 +55,7 @@ impl GitService {
 
     // Projedeki Tüm Branch'leri Listeler
     fn get_branches(path: &str) -> Result<Vec<String>, String> {
-        let output = Command::new("git")
+        let output = crate::services::create_command("git")
             .current_dir(path)
             .args(["branch", "--format=%(refname:short)"])
             .output()
@@ -81,7 +80,7 @@ impl GitService {
         // %H: Hash, %s: Mesaj, %an: Yazar, %ad: Tarih (Hepsi | simgesi ile ayrılıyor)
         let format_str = "--pretty=format:%H|%s|%an|%ad";
 
-        let output = Command::new("git")
+        let output = crate::services::create_command("git")
             .current_dir(path)
             .args(["log", &count_str, format_str, "--date=short"])
             .output()
@@ -110,7 +109,7 @@ impl GitService {
 
     // Projenin başlangıcından bu yana günlere göre commit sayılarını ve Github-like seviyesini (0-4) döner
     fn get_commit_activities(path: &str) -> Result<Vec<GitActivity>, String> {
-        let output = Command::new("git")
+        let output = crate::services::create_command("git")
             .current_dir(path)
             .args(["log", "--format=%ad", "--date=short"])
             .output()
@@ -152,7 +151,7 @@ impl GitService {
 
     // Git Add All Komutu
     pub fn git_add(path: &str) -> Result<(), String> {
-        let output = Command::new("git")
+        let output = crate::services::create_command("git")
             .current_dir(path)
             .args(["add", "."])
             .output()
@@ -167,7 +166,7 @@ impl GitService {
 
     // Git Commit Komutu
     pub fn git_commit(path: &str, message: &str) -> Result<(), String> {
-        let output = Command::new("git")
+        let output = crate::services::create_command("git")
             .current_dir(path)
             .args(["commit", "-m", message])
             .output()
@@ -182,7 +181,7 @@ impl GitService {
 
     // Git Push Komutu
     pub fn git_push(path: &str) -> Result<(), String> {
-        let output = Command::new("git")
+        let output = crate::services::create_command("git")
             .current_dir(path)
             .args(["push"])
             .output()
@@ -197,7 +196,7 @@ impl GitService {
 
     // Git Checkout Komutu
     pub fn git_checkout(path: &str, branch_name: &str) -> Result<(), String> {
-        let output = Command::new("git")
+        let output = crate::services::create_command("git")
             .current_dir(path)
             .args(["checkout", branch_name])
             .output()
@@ -211,7 +210,7 @@ impl GitService {
     }
 
     pub fn git_status(path: &str) -> Result<String, String> {
-        let output = Command::new("git")
+        let output = crate::services::create_command("git")
             .current_dir(path)
             .args(["status"])
             .output()
@@ -226,7 +225,7 @@ impl GitService {
 
     // Git Stash Komutu
     pub fn git_stash(path: &str) -> Result<(), String> {
-        let output = Command::new("git")
+        let output = crate::services::create_command("git")
             .current_dir(path)
             .args(["stash"])
             .output()
@@ -241,7 +240,7 @@ impl GitService {
 
     // Git Init (Yeni Repo Oluşturma)
     pub fn git_init(path: &str) -> Result<(), String> {
-        let output = Command::new("git")
+        let output = crate::services::create_command("git")
             .current_dir(path)
             .args(["init"])
             .output()
@@ -256,7 +255,7 @@ impl GitService {
 
     // Git Remote Add
     pub fn git_remote_add(path: &str, url: &str) -> Result<(), String> {
-        let output = Command::new("git")
+        let output = crate::services::create_command("git")
             .current_dir(path)
             .args(["remote", "add", "origin", url])
             .output()
@@ -272,13 +271,13 @@ impl GitService {
     // Git Branch -M main and Push -u origin main
     pub fn git_push_initial(path: &str) -> Result<(), String> {
         // İlk olarak branch ismini main yapalım
-        let _ = Command::new("git")
+        let _ = crate::services::create_command("git")
             .current_dir(path)
             .args(["branch", "-M", "main"])
             .output();
 
         // Push işlemi
-        let output = Command::new("git")
+        let output = crate::services::create_command("git")
             .current_dir(path)
             .args(["push", "-u", "origin", "main"])
             .output()

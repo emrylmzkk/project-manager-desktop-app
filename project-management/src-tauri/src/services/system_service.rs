@@ -1,5 +1,4 @@
 use crate::models::system_model::{DiskInfo, GitAccount, SystemInfo, SystemMetrics};
-use std::process::Command;
 use sysinfo::Disks;
 use sysinfo::System;
 
@@ -12,7 +11,7 @@ impl SystemService {
         let mut git_accounts = Vec::new();
 
         // 1. Check global git user
-        let global_name_opt = Command::new("git")
+        let global_name_opt = crate::services::create_command("git")
             .args(["config", "--global", "user.name"])
             .output()
             .ok()
@@ -24,7 +23,7 @@ impl SystemService {
                 }
             });
 
-        let global_email_opt = Command::new("git")
+        let global_email_opt = crate::services::create_command("git")
             .args(["config", "--global", "user.email"])
             .output()
             .ok()
@@ -47,7 +46,7 @@ impl SystemService {
         }
 
         // 2. Try github cli for additional accounts
-        if let Ok(gh_out) = Command::new("gh").args(["auth", "status"]).output() {
+        if let Ok(gh_out) = crate::services::create_command("gh").args(["auth", "status"]).output() {
             let stderr = String::from_utf8_lossy(&gh_out.stderr).to_string(); // gh often prints to stderr
             let stdout = String::from_utf8_lossy(&gh_out.stdout).to_string();
             let combined = format!("{}{}", stdout, stderr);

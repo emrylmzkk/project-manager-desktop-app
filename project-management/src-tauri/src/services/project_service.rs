@@ -111,68 +111,199 @@ impl ProjectService {
     }
 
     pub fn open_in_ide(path: &str, ide: &str) -> Result<(), String> {
-        let (command, args) = match std::env::consts::OS {
-            "windows" => {
-                let args = match ide {
-                    "vscode" => vec!["/c", "code", path],
-                    "cursor" => vec!["/c", "cursor", path],
-                    "visualstudio" => vec!["/c", "devenv", path],
-                    "antigravity" => vec!["/c", "antigravity", path],
-                    _ => vec!["/c", ide, path],
-                };
-                ("cmd", args)
-            }
-            "macos" => {
-                let app_name = match ide {
-                    "vscode" => "Visual Studio Code",
-                    "cursor" => "Cursor",
-                    "antigravity" => "Antigravity",
-                    _ => ide,
-                };
-                ("open", vec!["-a", app_name, path])
-            }
-            _ => {
-                // Linux ve Diğerleri
-                let cmd = match ide {
-                    "vscode" => "code",
-                    "cursor" => "cursor",
-                    "visualstudio" => "devenv",
-                    "antigravity" => "antigravity",
-                    _ => ide,
-                };
-                (cmd, vec![path])
-            }
-        };
-
-        let mut command_to_run = std::process::Command::new(command);
-        command_to_run.args(&args);
-
-        match command_to_run.output() {
-            Ok(output) => {
-                if output.status.success() {
-                    Ok(())
-                } else {
-                    let stderr = String::from_utf8_lossy(&output.stderr);
-                    Err(format!("Uygulama açılamadı veya bulunamadı: {}", stderr))
+    // 1. Komutu ve argümanları topla 
+    // Tüm tipleri (String, Vec<String>) yaparak tür uyuşmazlığını ve leak gereksinimini ortadan kaldırıyoruz.
+    let (command, args): (String, Vec<String>) = match std::env::consts::OS {
+        "windows" => {
+            match ide {
+                "vscode" => ("cmd".to_string(), vec!["/c".to_string(), "code".to_string(), path.to_string()]),
+                "cursor" => ("cmd".to_string(), vec!["/c".to_string(), "cursor".to_string(), path.to_string()]),
+                "visualstudio" => {
+                    if let Some(vs_path) = Self::get_visual_studio_path() {
+                        // Terminalde başarıyla çalışan tam yol mantığı
+                        (vs_path, vec![path.to_string()])
+                    } else {
+                        // Fallback: Eğer yol bulunamazsa eski yöntemi dene
+                        ("cmd".to_string(), vec!["/c".to_string(), "start".to_string(), "devenv".to_string(), path.to_string()])
+                    }
                 }
+                "antigravity" => ("cmd".to_string(), vec!["/c".to_string(), "antigravity".to_string(), path.to_string()]),
+                _ => ("cmd".to_string(), vec!["/c".to_string(), ide.to_string(), path.to_string()]),
             }
-            Err(e) => Err(format!("IDE açılamadı: {}", e)),
         }
+        "macos" => {
+            let app_name = match ide {
+                "vscode" => "Visual Studio Code",
+                "cursor" => "Cursor",
+                "antigravity" => "Antigravity",
+                _ => ide,
+            };
+            ("open".to_string(), vec!["-a".to_string(), app_name.to_string(), path.to_string()])
+        }
+        _ => {
+            // Linux ve Diğerleri
+            let exe = match ide {
+                "vscode" => "code",
+                "cursor" => "cursor",
+                "visualstudio" => "devenv",
+                _ => ide,
+            };
+            (exe.to_string(), vec![path.to_string()])
+        }
+    };
+
+    // 2. Komutu oluştur (String referansı &command kullanarak)
+    let mut command_to_run = crate::services::create_command(&command);
+    command_to_run.args(&args);
+
+    match command_to_run.output() {
+        Ok(output) => {
+            if output.status.success() {
+                Ok(())
+            } else {
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                Err(format!("Uygulama açılamadı (Hata Kodu: {}): {}", output.status, stderr))
+            }
+        }
+        Err(e) => Err(format!("IDE başlatılamadı (Sistem Hatası): {}", e)),
     }
+}
+
+    // pub fn open_in_ide(path: &str, ide: &str) -> Result<(), String> {
+    //     let (command, args) = match std::env::consts::OS {
+    //         // "windows" => {
+    //         //     let args = match ide {
+    //         //         "vscode" => vec!["/c", "code", path],
+    //         //         "cursor" => vec!["/c", "cursor", path],
+    //         //         //"visualstudio" => vec!["/c", "start", "devenv", path],
+    //         //         "visualstudio" => {
+
+    //         //             if let Some(vs_path) = Self::get_visual_studio_path() {
+    //         //                 (vs_path.leak(), vec![path])
+    //         //             } else {
+    //         //                 ("cmd", vec!["/c", "start", "devenv", path])
+    //         //             }
+    //         //         },
+    //         //         "antigravity" => vec!["/c", "antigravity", path],
+    //         //         _ => vec!["/c", ide, path],
+    //         //     };
+    //         //     ("cmd", args)
+    //         // }
+
+    //         "windows" => {
+    //         match ide {
+    //             "vscode" => ("cmd", vec!["/c", "code", path]),
+    //             "cursor" => ("cmd", vec!["/c", "cursor", path]),
+    //             "visualstudio" => {
+    //                 if let Some(vs_exec) = Self::get_visual_studio_path() {
+    //                     let cmd: &str = Box::leak(vs_exec.into_boxed_str());
+    //                     (cmd, vec![path])
+    //                 } else {
+    //                     ("cmd", vec!["/c", "start", "devenv", path])
+    //                 }
+    //             }
+    //             "antigravity" => ("cmd", vec!["/c", "antigravity", path]),
+    //             _ => ("cmd", vec!["/c", ide, path]),
+    //         }
+    //     }
+    //         "macos" => {
+    //             let app_name = match ide {
+    //                 "vscode" => "Visual Studio Code",
+    //                 "cursor" => "Cursor",
+    //                 "antigravity" => "Antigravity",
+    //                 _ => ide,
+    //             };
+    //             ("open", vec!["-a", app_name, path])
+    //         }
+    //         _ => {
+    //             // Linux ve Diğerleri
+    //             let cmd = match ide {
+    //                 "vscode" => "code",
+    //                 "cursor" => "cursor",
+    //                 "visualstudio" => "devenv",
+    //                 "antigravity" => "antigravity",
+    //                 _ => ide,
+    //             };
+    //             (cmd, vec![path])
+    //         }
+    //     };
+
+    //     let mut command_to_run = crate::services::create_command(command);
+    //     command_to_run.args(&args);
+
+    //     match command_to_run.output() {
+    //         Ok(output) => {
+    //             if output.status.success() {
+    //                 Ok(())
+    //             } else {
+    //                 let stderr = String::from_utf8_lossy(&output.stderr);
+    //                 Err(format!("Uygulama açılamadı veya bulunamadı: {}", stderr))
+    //             }
+    //         }
+    //         Err(e) => Err(format!("IDE açılamadı: {}", e)),
+    //     }
+    // }
 
     pub fn open_in_file_explorer(path: &str) -> Result<(), String> {
         #[cfg(target_os = "windows")]
-        let result = std::process::Command::new("explorer").arg(path).spawn();
+        let result = crate::services::create_command("explorer").arg(path).spawn();
 
         #[cfg(target_os = "macos")]
-        let result = std::process::Command::new("open").arg(path).spawn();
+        let result = crate::services::create_command("open").arg(path).spawn();
 
         #[cfg(target_os = "linux")]
-        let result = std::process::Command::new("xdg-open").arg(path).spawn();
+        let result = crate::services::create_command("xdg-open").arg(path).spawn();
 
         match result {
             Ok(_) => Ok(()),
             Err(e) => Err(format!("Dosya gezgini açılamadı: {}", e)),
         }
     }
+
+    // fn get_visual_studio_path() -> Option<String> {
+
+    //     #[cfg(target_os = "windows")]
+    //     {
+
+    //         let vs_path = "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe"
+
+    //         let output = std::process::Command::new(vs_path)
+    //             .args(&["-latest", "-products", "*", "-property", "productPath"])
+    //             .output()
+    //             .ok()?;
+
+    //         if output.status.success() {
+    //             let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+
+    //             if !path.is_empty() {
+    //                 return Some(path)
+    //             }
+    //         }
+
+
+    //     }
+
+    //     None
+
+    // }
+
+    fn get_visual_studio_path() -> Option<String> {
+    #[cfg(target_os = "windows")]
+    {
+        let vswhere = "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe";
+        
+        let output = std::process::Command::new(vswhere)
+            .args(&["-latest", "-products", "*", "-property", "productPath"])
+            .output()
+            .ok()?;
+
+        if output.status.success() {
+            let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            if !path.is_empty() && std::path::Path::new(&path).exists() {
+                return Some(path);
+            }
+        }
+    }
+    None
+}
 }
