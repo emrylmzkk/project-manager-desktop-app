@@ -11,12 +11,14 @@ impl GitService {
         let branches = Self::get_branches(path)?;
         let recent_commits = Self::get_recent_commits(path, 5)?; // Son 5 commit'i alıyoruz
         let commit_activity = Self::get_commit_activities(path)?;
+        let remote_url = Self::get_remote_url(path);
 
         Ok(GitDetails {
             current_branch,
             branches,
             recent_commits,
             commit_activity,
+            remote_url,
         })
     }
 
@@ -33,6 +35,23 @@ impl GitService {
         } else {
             Err("Aktif branch bulunamadı".to_string())
         }
+    }
+
+    // Remote URL'i bulur
+    fn get_remote_url(path: &str) -> Option<String> {
+        let output = Command::new("git")
+            .current_dir(path)
+            .args(["config", "--get", "remote.origin.url"])
+            .output()
+            .ok()?;
+
+        if output.status.success() {
+            let url = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            if !url.is_empty() {
+                return Some(url);
+            }
+        }
+        None
     }
 
     // Projedeki Tüm Branch'leri Listeler

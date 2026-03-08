@@ -2,31 +2,36 @@
 import { motion } from "framer-motion";
 import { FolderPlus, Layers, MousePointerSquareDashed, X, Upload } from "lucide-react";
 import { useState, useEffect } from "react";
-import { listen } from "@tauri-apps/api/event";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
 
 export const AddProjectModal = ({ isOpen, onClose, onSelectSingle, onSelectMulti, onDropped }) => {
     const [isDragging, setIsDragging] = useState(false);
 
     // Tauri Native Sürükle-Bırak dinleyicisi
     useEffect(() => {
-        let unlistenPromise;
+        let unlistenFn = null;
 
-        if (isOpen) {
-            unlistenPromise = listen("tauri://drop", (event) => {
-                if (onDropped) {
-                    // Tauri API payload formatına göre uyumluluk
-                    const paths = event.payload?.paths || event.payload;
+        const setupListener = async () => {
+            unlistenFn = await getCurrentWebview().onDragDropEvent((event) => {
+                if (isOpen && onDropped && event.payload.type === "drop") {
+                    const paths = event.payload.paths;
                     if (Array.isArray(paths) && paths.length > 0) {
                         onDropped(paths);
                     }
                 }
-                setIsDragging(false);
+                if (event.payload.type === "drop" || event.payload.type === "cancel") {
+                    setIsDragging(false);
+                }
             });
+        };
+
+        if (isOpen) {
+            setupListener();
         }
 
         return () => {
-            if (unlistenPromise) {
-                unlistenPromise.then(unlisten => unlisten());
+            if (unlistenFn) {
+                unlistenFn();
             }
         };
     }, [isOpen, onDropped]);

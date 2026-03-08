@@ -22,4 +22,5 @@ pub struct GitDetails {
     pub branches: Vec<String>,
     pub recent_commits: Vec<GitCommit>,
     pub commit_activity: Vec<GitActivity>,
+    pub remote_url: Option<String>,
 }

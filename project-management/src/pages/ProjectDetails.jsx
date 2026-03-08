@@ -14,6 +14,7 @@ import { IdeNotFoundModal } from "../components/IdeNotFoundModal";
 import { GitCheckoutErrorModal } from "../components/GitCheckoutErrorModal";
 import { GitSetupWizard } from "../components/GitSetupWizard";
 import { GitStatusModal } from "../components/GitStatusModal";
+import { open } from "@tauri-apps/plugin-shell";
 
 // Recursive olarak Ağaç Yapısını Çizen Component
 const FileNodeItem = ({ node }) => {
@@ -212,6 +213,15 @@ export const ProjectDetails = () => {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
+                        {project.is_git && gitDetails?.remote_url && (
+                            <button
+                                onClick={() => open(gitDetails.remote_url)}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border border-transparent rounded-lg text-sm font-medium transition-colors cursor-pointer hover:opacity-90"
+                                title="Github'da Gör"
+                            >
+                                <ExternalLink size={16} /> Git Sayfası
+                            </button>
+                        )}
                         <button
                             onClick={handleOpenExplorer}
                             className="flex items-center gap-2 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm font-medium transition-colors cursor-pointer"
