@@ -2,11 +2,11 @@ import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 
 export const ProjectService = {
-    // Mac klasör seçme diyaloğunu açar
+    // Mac klasör seçme diyaloğunu açar 
     async selectDirectory() {
         const selected = await open({
             directory: true,
-            multiple: false,
+            multiple: false, //1 secim hakki veriyor
             title: "Projelerinin Bulunduğu Klasörü Seç",
         });
         return selected; // Seçilen path döner (string veya null)
@@ -60,6 +60,36 @@ export const ProjectService = {
         } catch (error) {
             console.error("Dosya gezgini ile açılırken hata:", error);
             return false;
+        }
+    },
+
+    async selectMultipleDirectories() {
+
+        try {
+
+            const selected = await open({
+                directory: true,
+                multiple: true, //birden fazla secim hakki veriyor
+                title: "Birden fazla klasör seçiniz"
+            });
+
+            return Array.isArray(selected) ? selected : (selected ? [selected] : [])
+
+        } catch (error) {
+            console.error("Çoklu klasör seçim hatasi");
+            return []
+
+        }
+
+
+    },
+
+    async getProjectsByPaths(paths) {
+        try {
+            return await invoke("get_projects_from_paths", { paths })
+        } catch (error) {
+            console.error("Birden fazla proje eklenirken hata meydana geldi", error)
+            return []
         }
     }
 };

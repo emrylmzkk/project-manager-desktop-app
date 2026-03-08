@@ -35,7 +35,8 @@ fn main() {
             project_management_lib::commands::project_command::git_init,
             project_management_lib::commands::project_command::git_remote_add,
             project_management_lib::commands::project_command::git_push_initial,
-            project_management_lib::commands::project_command::git_status
+            project_management_lib::commands::project_command::git_status,
+            project_management_lib::commands::project_command::get_projects_from_paths,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

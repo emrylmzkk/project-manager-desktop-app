@@ -77,3 +77,8 @@ pub fn git_push_initial(path: String) -> Result<(), String> {
 pub fn git_status(path: String) -> Result<String, String> {
     GitService::git_status(&path)
 }
+
+#[tauri::command]
+pub fn get_projects_from_paths(paths: Vec<String>) -> Vec<Project> {
+    ProjectService::get_projects_from_paths(paths)
+}

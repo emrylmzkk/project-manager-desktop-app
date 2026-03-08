@@ -16,7 +16,7 @@ export const ProjectList = ({ projects, loading, onProjectClick, onRename, onOpe
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center">
                 <p className="text-zinc-500 dark:text-zinc-400">
-                    Henüz taranmış bir proje yok.
+                    Filtrenize uygun proje bulunamadı
                 </p>
             </div>
         );

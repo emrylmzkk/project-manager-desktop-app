@@ -55,6 +55,13 @@ impl ProjectService {
         }
     }
 
+    pub fn get_projects_from_paths(paths: Vec<String>) -> Vec<Project> {
+        paths
+            .into_iter()
+            .filter_map(|p| Self::get_project_info(&p))
+            .collect()
+    }
+
     pub fn get_file_tree(dir_path: &str, max_depth: u8) -> Vec<FileNode> {
         Self::read_directory(Path::new(dir_path), 0, max_depth)
     }
