@@ -25,7 +25,7 @@ export const GitCheckoutErrorModal = ({ isOpen, onClose, onStash, onOpenIde, tar
                         className="flex items-center justify-center gap-2 py-3 px-4 bg-amber-500 text-white font-medium rounded-xl hover:bg-amber-600 transition-colors"
                     >
                         <Archive size={18} />
-                        Rafa Kaldır (Stash) & Geç
+                        Stash
                     </button>
 
                     <button
@@ -33,7 +33,7 @@ export const GitCheckoutErrorModal = ({ isOpen, onClose, onStash, onOpenIde, tar
                         className="flex items-center justify-center gap-2 py-3 px-4 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium rounded-xl border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
                     >
                         <ExternalLink size={18} />
-                        Birlikte Aç (IDE) ile Değişiklikleri Gör
+                        IDE ile Değişiklikleri Gör
                     </button>
 
                     <button

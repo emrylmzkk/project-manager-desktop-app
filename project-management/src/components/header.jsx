@@ -35,7 +35,7 @@ export const Header = ({ onSelectFolder }) => {
                     <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white flex items-center gap-2">
                         Project Navigator
                     </h1>
-                    <p className="text-zinc-500 text-sm">Proje Dosyalarınız & Aktiviteleriniz</p>
+                    <p className="text-zinc-500 text-sm">Proje Dosyalarınızı ve Git hareketlerinizi kontrol edin</p>
                 </div>
             </div>
 

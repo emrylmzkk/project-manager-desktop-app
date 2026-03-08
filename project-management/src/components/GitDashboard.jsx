@@ -67,7 +67,7 @@ export const GitDashboard = ({ project, gitDetails, fetchGitData, onCommitOpen, 
                     </button>
                     <button
                         onClick={handleGitStatus}
-                        className="w-full flex justify-center items-center gap-2 px-4 py-3 bg-zinc-100 dark:bg-zinc-800/80 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-600 dark:text-purple-400 border border-zinc-200 dark:border-zinc-700 hover:border-purple-300 dark:hover:border-purple-700 rounded-xl text-sm font-medium transition-colors cursor-pointer"
+                        className="w-full flex justify-center items-center gap-2 px-4 py-3 bg-zinc-100 dark:bg-zinc-800/80 hover:bg-orange-50 dark:hover:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-zinc-200 dark:border-zinc-700 hover:border-orange-300 dark:hover:border-orange-700 rounded-xl text-sm font-medium transition-colors cursor-pointer"
                     >
                         Git Status
                     </button>

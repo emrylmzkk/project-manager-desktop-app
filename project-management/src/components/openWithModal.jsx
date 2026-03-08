@@ -7,7 +7,7 @@ export const OpenWithModal = ({ isOpen, onClose, onOpenIn }) => {
     const IDE_LIST = [
         { id: "vscode", name: "Visual Studio Code", icon: <SvgIcon name="vscode" size={20} className="text-blue-500" /> },
         { id: "cursor", name: "Cursor", icon: <SvgIcon name="cursor" size={18} className="text-zinc-800 dark:text-zinc-200" /> },
-        { id: "visualstudio", name: "Visual Studio 2026", icon: <SvgIcon name="visualstudio" size={20} className="text-purple-600" /> },
+        { id: "visualStudio", name: "Visual Studio", icon: <SvgIcon name="visualStudio" size={20} className="text-purple-600" /> },
         { id: "antigravity", name: "AntiGravity", icon: <SvgIcon name="antigravity" size={18} className="text-zinc-800 dark:text-zinc-200" /> }
     ];
 
