@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Monitor, User, Cpu, MemoryStick, HardDrive, ChevronUp } from "lucide-react";
 
+const APP_VERSION = "v1.0.2";
+
 export const StatusBar = () => {
     const [systemInfo, setSystemInfo] = useState(null);
     const [showAccounts, setShowAccounts] = useState(false);
@@ -88,6 +90,14 @@ export const StatusBar = () => {
                             </div>
                         </div>
                     )}
+                </div>
+            </div>
+
+            {/* Orta Kısım - Uygulama Versiyonu */}
+            <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 pointer-events-none">
+                <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded cursor-default">
+                    <span className="font-mono text-[10px] text-blue-100">App Version</span>
+                    <span className="font-mono text-[10px] text-blue-100">{APP_VERSION}</span>
                 </div>
             </div>
 

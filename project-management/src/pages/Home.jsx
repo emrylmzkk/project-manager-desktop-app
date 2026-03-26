@@ -7,6 +7,7 @@ import { ProjectList } from "../components/projectList";
 import { RemoveProjectModal } from "../components/RemoveProjectModal";
 import { AddProjectModal } from "../components/AddProjectModa";
 import { Search } from "lucide-react";
+import { GitCloneModal } from "../components/GitCloneModal";
 
 export const Home = () => {
     const [projects, setProjects] = useState(() => {
@@ -18,6 +19,8 @@ export const Home = () => {
     const navigate = useNavigate();
     const [isAddModelOpen, setIsAddModelOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+
+    const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
 
     useEffect(() => {
         localStorage.setItem("my_projects", JSON.stringify(projects));
@@ -51,6 +54,29 @@ export const Home = () => {
 
         setLoading(false);
         setIsAddModelOpen(false);
+    }
+
+
+
+    const handleSelectGitClone = async () => {
+        setIsAddModelOpen(false)
+        setIsCloneModalOpen(true)
+
+    }
+
+    const handleCloneSuccess = async (targetPath) => {
+
+        setLoading(true);
+
+        const projectData = await ProjectService.addProject(targetPath);
+
+
+        if (projectData) {
+            setProjects(prev => [...prev, projectData])
+        }
+
+        setIsCloneModalOpen(false)
+
     }
 
     const handleSelectMulti = async () => {
@@ -202,6 +228,13 @@ export const Home = () => {
                 onSelectSingle={handleSelectSingle}
                 onSelectMulti={handleSelectMulti}
                 onDropped={handleDrop}
+                onSelectClone={handleSelectGitClone}
+            />
+
+            <GitCloneModal
+                isOpen={isCloneModalOpen}
+                onClose={() => setIsCloneModalOpen(false)}
+                onSuccess={handleCloneSuccess}
             />
             <ProjectList
                 projects={filteredProjects}

@@ -289,4 +289,59 @@ impl GitService {
             Err(String::from_utf8_lossy(&output.stderr).to_string())
         }
     }
+
+    pub fn git_pull(path: &str) -> Result<String, String> {
+        let current_branch = Self::get_current_branch(path)?;
+
+        let output = crate::services::create_command("git")
+            .current_dir(path)
+            .args(["pull", "origin", &current_branch])
+            .output()
+            .map_err(|e| e.to_string())?;
+
+        if output.status.success() {
+            Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+        } else {
+            Err(String::from_utf8_lossy(&output.stderr).trim().to_string())
+        }
+    }
+
+    pub fn git_fetch(path: &str) -> Result<String, String> {
+        let output = crate::services::create_command("git")
+            .current_dir(path)
+            .args(["fetch", "--all", "--prune"]) // --prune: silinmiş remote branch'leri temizler
+            .output()
+            .map_err(|e| e.to_string())?;
+
+        if output.status.success() {
+            // fetch başarılı ama stdout genelde boş olur, stderr'de bilgi gelir (git'in özelliği)
+            let out = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            let err = String::from_utf8_lossy(&output.stderr).trim().to_string();
+            Ok(if out.is_empty() { err } else { out })
+        } else {
+            Err(String::from_utf8_lossy(&output.stderr).trim().to_string())
+        }
+    }
+
+    pub fn git_clone(target_path: &str, url: &str) -> Result<String, String> {
+        let is_https = url.starts_with("https://");
+        let is_ssh = url.starts_with("git@");
+
+        if !is_https && !is_ssh {
+            return Err("Geçersiz Clone formatı".to_string());
+        }
+
+        let output = crate::services::create_command("git")
+            .current_dir(target_path)
+            .args(["clone", url])
+            .output()
+            .map_err(|e| e.to_string())?;
+
+        if output.status.success() {
+            let msg = String::from_utf8_lossy(&output.stderr).trim().to_string();
+            Ok(msg)
+        } else {
+            Err(String::from_utf8_lossy(&output.stderr).trim().to_string())
+        }
+    }
 }

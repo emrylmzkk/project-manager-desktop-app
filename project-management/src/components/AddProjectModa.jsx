@@ -1,10 +1,10 @@
 // src/components/AddProjectModal.jsx
 import { motion } from "framer-motion";
-import { FolderPlus, Layers, MousePointerSquareDashed, X, Upload } from "lucide-react";
+import { FolderPlus, Layers, MousePointerSquareDashed, X, Upload, BookDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 
-export const AddProjectModal = ({ isOpen, onClose, onSelectSingle, onSelectMulti, onDropped }) => {
+export const AddProjectModal = ({ isOpen, onClose, onSelectSingle, onSelectClone, onSelectMulti, onDropped }) => {
     const [isDragging, setIsDragging] = useState(false);
 
     // Tauri Native Sürükle-Bırak dinleyicisi
@@ -87,6 +87,14 @@ export const AddProjectModal = ({ isOpen, onClose, onSelectSingle, onSelectMulti
                             <div className="text-left">
                                 <div className="font-semibold dark:text-white">Çoklu Seçim</div>
                                 <div className="text-xs text-zinc-500">Birden fazla klasör</div>
+                            </div>
+                        </button>
+
+                        <button onClick={onSelectClone} className="w-full flex items-center gap-4 p-4 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-2xl hover:border-emerald-500 transition-all">
+                            <BookDown className="text-orange-500" />
+                            <div className="text-left">
+                                <div className="font-semibold dark:text-white">Git Clone</div>
+                                <div className="text-xs text-zinc-500">Git Clone İşlemi</div>
                             </div>
                         </button>
                     </div>

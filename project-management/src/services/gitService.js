@@ -14,6 +14,34 @@ export const GitService = {
         }
     },
 
+    async gitFetch(path) {
+
+        try {
+
+            const details = await invoke("git_fetch", { path });
+            return details;
+
+        } catch (error) {
+            console.error("Git fetch hatasi", error);
+            return null;
+        }
+
+    },
+
+    async gitPull(path) {
+
+        try {
+
+            const details = await invoke("git_pull", { path });
+            return details;
+
+        } catch (error) {
+            console.error("Git pull hatasi", error);
+            return null;
+        }
+
+    },
+
     async gitAdd(path) {
         try {
             await invoke("git_add", { path });

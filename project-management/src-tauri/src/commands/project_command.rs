@@ -82,3 +82,18 @@ pub fn git_status(path: String) -> Result<String, String> {
 pub fn get_projects_from_paths(paths: Vec<String>) -> Vec<Project> {
     ProjectService::get_projects_from_paths(paths)
 }
+
+#[tauri::command]
+pub fn git_pull(path: String) -> Result<String, String> {
+    GitService::git_pull(&path)
+}
+
+#[tauri::command]
+pub fn git_fetch(path: String) -> Result<String, String> {
+    GitService::git_fetch(&path)
+}
+
+#[tauri::command]
+pub fn git_clone(target_path: String, url: String) -> Result<String, String> {
+    GitService::git_clone(&target_path, &url)
+}
