@@ -24,6 +24,15 @@ export const GitCloneModal = ({ isOpen, onClose, onSuccess }) => {
         }
     };
 
+    const getRepoName = (url) => {
+
+        const trimmed = url.trim().replace(/\/$/, "");
+        const last = trimmed.split(/[/:]/).pop();
+
+        return last.endsWith(".git") ? last.slice(0, -4) : last;
+
+    }
+
     const handleClone = async () => {
         if (!url.trim()) {
             setError("Lütfen bir URL girin.");
@@ -38,10 +47,15 @@ export const GitCloneModal = ({ isOpen, onClose, onSuccess }) => {
         setIsLoading(true);
         try {
             await invoke("git_clone", { targetPath, url: url.trim() });
-            onSuccess(targetPath); // üst bileşene bildir
+
+            const repoName = getRepoName(url);
+            const separator = targetPath.includes("\\") ? "\\" : "/";
+            const clonedPath = `${targetPath}${separator}${repoName}`;
+
+            onSuccess(clonedPath);
             handleClose();
         } catch (err) {
-            setError(err);
+            setError(err.message || "Klonlama başarısız");
         } finally {
             setIsLoading(false);
         }

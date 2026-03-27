@@ -20,6 +20,12 @@ export const Home = () => {
     const [isAddModelOpen, setIsAddModelOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
+    const [errorModal, setErrorModal] = useState({
+        isOpen: false,
+        title: "",
+        message: ""
+    })
+
     const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
 
     useEffect(() => {
@@ -28,6 +34,14 @@ export const Home = () => {
 
     const handleSelectFolder = () => {
         setIsAddModelOpen(true);
+    }
+
+    const showErrorModal = (title, message) => {
+        setErrorModal({
+            isOpen: true,
+            title,
+            message
+        })
     }
 
     const handleSelectSingle = async () => {
@@ -68,15 +82,25 @@ export const Home = () => {
 
         setLoading(true);
 
-        const projectData = await ProjectService.addProject(targetPath);
+        try {
+
+            const projectData = await ProjectService.addProject(targetPath);
 
 
-        if (projectData) {
-            setProjects(prev => [...prev, projectData])
+            if (projectData) {
+                setProjects(prev => [...prev, projectData])
+            }
+
+        } catch (error) {
+
+            //console.error("Proje eklenemedi", error);
+
+            showErrorModal("Proje eklenemedi", error.message || "Bilinmeyen bir hata oluştu")
+
+        } finally {
+            setLoading(false);
+            setIsCloneModalOpen(false);
         }
-
-        setIsCloneModalOpen(false)
-
     }
 
     const handleSelectMulti = async () => {
