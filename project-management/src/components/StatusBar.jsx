@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Monitor, User, Cpu, MemoryStick, HardDrive, ChevronUp } from "lucide-react";
 
-const APP_VERSION = "v1.0.2";
+const APP_VERSION = "v1.1.4";
 
 export const StatusBar = () => {
     const [systemInfo, setSystemInfo] = useState(null);

@@ -29,3 +29,94 @@
 .dark *::-webkit-scrollbar-thumb:hover {
     background-color: rgba(150, 150, 150, 0.4);
 }
+
+/* Pixel Character Animations */
+@keyframes pixelFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-4px);
+    }
+}
+
+@keyframes pixelBob {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    30% {
+        transform: translateY(-2px) rotate(-4deg);
+    }
+    70% {
+        transform: translateY(-2px) rotate(4deg);
+    }
+}
+
+@keyframes pixelTwinkle {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+@keyframes pixelPulse {
+    0%, 100% {
+        filter: brightness(1);
+    }
+    50% {
+        filter: brightness(1.2) drop-shadow(0 0 4px currentColor);
+    }
+}
+
+@keyframes pixelRainbow {
+    0% {
+        filter: hue-rotate(0deg) saturate(1.4) drop-shadow(0 0 5px rgba(244, 114, 182, 0.4));
+    }
+    50% {
+        filter: hue-rotate(180deg) saturate(1.8) drop-shadow(0 0 10px rgba(167, 139, 250, 0.6));
+    }
+    100% {
+        filter: hue-rotate(360deg) saturate(1.4) drop-shadow(0 0 5px rgba(244, 114, 182, 0.4));
+    }
+}
+
+@keyframes pixelBreath {
+    0%, 100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+    50% {
+        transform: scale(1.04) translateY(-1px);
+        filter: brightness(1.15) drop-shadow(0 0 8px rgba(239, 68, 68, 0.3));
+    }
+}
+
+/* Animated Header Backgrounds */
+@keyframes headerRainbow {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(360deg); }
+}
+
+@keyframes headerBreathVaderLight {
+    0%, 100% { background-color: rgba(244, 244, 245, 0.9); border-color: rgba(254, 202, 202, 0.7); }
+    50% { background-color: rgba(254, 226, 226, 0.7); border-color: rgba(248, 113, 113, 0.6); }
+}
+
+@keyframes headerBreathVaderDark {
+    0%, 100% { background-color: rgba(24, 24, 27, 0.4); border-color: rgba(153, 27, 27, 0.4); }
+    50% { background-color: rgba(69, 10, 10, 0.3); border-color: rgba(239, 68, 68, 0.4); }
+}
+
+.animate-unicorn-header {
+    animation: headerRainbow 12s linear infinite;
+}
+
+.animate-vader-header-light {
+    animation: headerBreathVaderLight 6s ease-in-out infinite;
+}
+
+.animate-vader-header-dark {
+    animation: headerBreathVaderDark 6s ease-in-out infinite;
+}

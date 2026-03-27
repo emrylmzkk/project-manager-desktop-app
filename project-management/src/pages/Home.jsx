@@ -230,10 +230,11 @@ export const Home = () => {
     });
 
     return (
-        <div className="min-h-screen bg-zinc-50 dark:bg-[#121212] transition-colors duration-200 p-8 font-sans">
+        <div className="min-h-screen bg-zinc-50 dark:bg-[#121212] transition-colors duration-200 font-sans">
             <Header onSelectFolder={handleSelectFolder} />
 
-            <div className="mb-6 flex gap-3 mt-4 justify-center">
+            <div className="px-8 pb-8">
+                <div className="mb-6 flex gap-3 mt-4 justify-center">
                 <div className="relative flex-1 max-w-lg">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
                     <input
@@ -275,6 +276,7 @@ export const Home = () => {
                 onClose={() => setProjectToRemove(null)}
                 onConfirm={handleRemoveProject}
             />
+            </div>
         </div>
     );
 };
