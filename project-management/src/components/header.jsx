@@ -3,14 +3,12 @@ import { Sun, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { SvgIcon } from "./SvgIcon";
-//import { AvatarPickerModal, PixelChar } from "./AvatarPickerModal";
-import { AvatarPickerModal, PixelChar, ANIMS, CHARACTERS } from "./icons/AvatarPickerModal";
+import { AvatarPickerModal, PixelChar, ANIMS } from "./icons/AvatarPickerModal";
 
-export const Header = ({ onSelectFolder }) => {
+export const Header = ({ onSelectFolder, selectedAvatar, onAvatarSelect }) => {
     const { theme, toggleTheme } = useTheme();
     const [osName, setOsName] = useState("");
     const [modalOpen, setModalOpen] = useState(false);
-    const [selectedChar, setSelectedChar] = useState(null);   // seçili avatar
 
     useEffect(() => {
         // Sistem bilgisini al
@@ -19,21 +17,7 @@ export const Header = ({ onSelectFolder }) => {
                 if (info && info.os) setOsName(info.os.toLowerCase());
             })
             .catch(console.error);
-
-        // Kayıtlı avatarı yükle
-        const savedAvatarId = localStorage.getItem("selected_avatar");
-        if (savedAvatarId) {
-            const char = CHARACTERS.find(c => c.id === savedAvatarId);
-            if (char) setSelectedChar(char);
-        }
     }, []);
-
-    // Avatar değişince kaydet
-    useEffect(() => {
-        if (selectedChar) {
-            localStorage.setItem("selected_avatar", selectedChar.id);
-        }
-    }, [selectedChar]);
 
     const getOsIcon = () => {
         if (osName.includes("windows")) return <SvgIcon name="windows" size={20} className="text-blue-500" />;
@@ -43,12 +27,11 @@ export const Header = ({ onSelectFolder }) => {
     };
 
     return (
-        // ↓ relative şart - modal absolute positioning için buna göre konumlanır
         <header className={`
             sticky top-0 z-30 w-full flex flex-col md:flex-row justify-between items-center mb-10 gap-4
             p-5 rounded-b-[2.5rem] border-b border-x transition-all duration-700 ease-in-out backdrop-blur-md
-            ${selectedChar
-                ? (theme === "light" ? selectedChar.headerTheme.light : selectedChar.headerTheme.dark)
+            ${selectedAvatar
+                ? (theme === "light" ? selectedAvatar.headerTheme.light : selectedAvatar.headerTheme.dark)
                 : "bg-white/80 dark:bg-zinc-900/80 border-zinc-200 dark:border-zinc-800 shadow-sm"}
         `}>
             <div className="flex items-center gap-4">
@@ -57,18 +40,18 @@ export const Header = ({ onSelectFolder }) => {
                 <button
                     onClick={() => setModalOpen(true)}
                     className="hidden sm:flex items-center justify-center w-14 h-14 rounded-2xl
-                               bg-white/90 dark:bg-zinc-800/90
-                               border border-zinc-200 dark:border-zinc-700
-                               hover:border-blue-400 dark:hover:border-blue-500
-                               hover:scale-105 transition-all cursor-pointer group"
+                                bg-white/90 dark:bg-zinc-800/90
+                                border border-zinc-200 dark:border-zinc-700
+                                hover:border-blue-400 dark:hover:border-blue-500
+                                hover:scale-105 transition-all cursor-pointer group"
                     title="Avatar Seç"
-                    style={selectedChar ? { boxShadow: selectedChar.glow } : {}}
+                    style={selectedAvatar ? { boxShadow: selectedAvatar.glow } : {}}
                 >
                     <div className="flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                        {selectedChar
+                        {selectedAvatar
                             ? (
-                                <div style={{ animation: ANIMS[selectedChar.anim] }}>
-                                    <PixelChar char={selectedChar} pixelSize={4.5} />
+                                <div style={{ animation: ANIMS[selectedAvatar.anim] }}>
+                                    <PixelChar char={selectedAvatar} pixelSize={4.5} />
                                 </div>
                             )
                             : (
@@ -106,12 +89,11 @@ export const Header = ({ onSelectFolder }) => {
                 </button>
             </div>
 
-            {/* Modal - header'ın sağ üst köşesinden açılır, tüm genişliği kaplar */}
             <AvatarPickerModal
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
-                onSelect={(char) => setSelectedChar(char)}
-                currentAvatar={selectedChar?.id}
+                onSelect={(char) => onAvatarSelect(char)}
+                currentAvatar={selectedAvatar?.id}
             />
         </header>
     );

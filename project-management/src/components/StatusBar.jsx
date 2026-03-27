@@ -1,30 +1,15 @@
 import { useEffect, useState, useRef } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import { Monitor, User, Cpu, MemoryStick, HardDrive, ChevronUp } from "lucide-react";
+import { useTheme } from "../context/themeContext";
 
-const APP_VERSION = "v1.1.4";
+const APP_VERSION = "v1.1.7";
 
-export const StatusBar = () => {
-    const [systemInfo, setSystemInfo] = useState(null);
+export const StatusBar = ({ selectedAvatar, selectedDisk, onDiskSelect, systemInfo }) => {
+    const { theme } = useTheme();
     const [showAccounts, setShowAccounts] = useState(false);
     const [showDisks, setShowDisks] = useState(false);
     const accountsRef = useRef(null);
     const disksRef = useRef(null);
-
-    const fetchSystemInfo = async () => {
-        try {
-            const info = await invoke("get_system_info");
-            setSystemInfo(info);
-        } catch (error) {
-            console.error("Sistem bilgisi alınamadı:", error);
-        }
-    };
-
-    useEffect(() => {
-        fetchSystemInfo();
-        const interval = setInterval(fetchSystemInfo, 3000); // Her 3 saniyede bir metrikleri yenile
-        return () => clearInterval(interval);
-    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -53,7 +38,14 @@ export const StatusBar = () => {
     const activeAccount = accounts.length > 0 ? accounts[0] : null;
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 h-6 bg-blue-600 dark:bg-blue-700 text-white flex items-center justify-between px-3 text-[11px] font-medium z-50 shadow-inner select-none tracking-wide">
+        <div className={`
+            fixed bottom-0 left-0 right-0 h-6 flex items-center justify-between px-3 text-[11px] font-medium z-50 shadow-inner select-none tracking-wide transition-all duration-700 ease-in-out border-t
+            ${selectedAvatar
+                ? (theme === "light"
+                    ? `${selectedAvatar.headerTheme.light} text-zinc-800`
+                    : `${selectedAvatar.headerTheme.dark} text-white opacity-100`)
+                : "bg-blue-600 dark:bg-blue-700 text-white border-transparent"}
+        `}>
             {/* Sol Kısım */}
             <div className="flex items-center gap-4 h-full relative">
                 <div className="flex items-center gap-1.5 hover:bg-white/20 px-1.5 py-0.5 rounded transition-colors cursor-default">
@@ -96,8 +88,8 @@ export const StatusBar = () => {
             {/* Orta Kısım - Uygulama Versiyonu */}
             <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 pointer-events-none">
                 <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded cursor-default">
-                    <span className="font-mono text-[10px] text-blue-100">App Version</span>
-                    <span className="font-mono text-[10px] text-blue-100">{APP_VERSION}</span>
+                    <span className="font-mono text-[10px] opacity-70">App Version</span>
+                    <span className="font-mono text-[10px] opacity-70">{APP_VERSION}</span>
                 </div>
             </div>
 
@@ -118,26 +110,44 @@ export const StatusBar = () => {
                 <div className="relative h-full flex items-center" ref={disksRef}>
                     <button
                         onClick={() => setShowDisks(!showDisks)}
-                        className="flex items-center gap-1.5 hover:bg-white/20 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
-                        title="Disk Kullanımları"
+                        className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded transition-colors cursor-pointer ${selectedDisk ? 'bg-white/30 font-bold' : 'hover:bg-white/20'}`}
+                        title={selectedDisk ? `Filtrelendi: ${selectedDisk.name || selectedDisk.mount_point}` : "Disk Kullanımları"}
                     >
                         <HardDrive size={12} />
-                        <span className="font-mono hidden sm:inline">{metrics.disks.length} Disk</span>
+                        <span className="font-mono hidden sm:inline">
+                            {selectedDisk ? (selectedDisk.name || selectedDisk.mount_point) : `${metrics.disks.length} Disk`}
+                        </span>
                         <ChevronUp size={10} className={`transition-transform ${showDisks ? "rotate-180" : ""}`} />
                     </button>
 
                     {showDisks && metrics.disks.length > 0 && (
                         <div className="absolute right-0 bottom-full mb-2 w-72 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xl overflow-hidden py-1 text-zinc-800 dark:text-zinc-200">
-                            <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
-                                <span className="font-semibold text-xs">Sistem Sürücüleri (Dahili / Harici)</span>
+                            <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 flex justify-between items-center">
+                                <span className="font-semibold text-xs">Sistem Sürücüleri</span>
+                                {selectedDisk && (
+                                    <button
+                                        onClick={() => { onDiskSelect(null); setShowDisks(false); }}
+                                        className="text-[10px] text-blue-500 hover:underline px-1.5 select-none cursor-pointer"
+                                    >
+                                        Tümünü Göster
+                                    </button>
+                                )}
                             </div>
                             <div className="max-h-60 overflow-y-auto">
                                 {metrics.disks.map((disk, idx) => {
                                     const usedSpace = disk.total_space_gb - disk.available_space_gb;
                                     const percent = disk.total_space_gb > 0 ? (usedSpace / disk.total_space_gb) * 100 : 0;
+                                    const isActive = selectedDisk?.mount_point === disk.mount_point;
 
                                     return (
-                                        <div key={idx} className="px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800 border-b last:border-0 border-zinc-100 dark:border-zinc-800/50 flex flex-col gap-1.5">
+                                        <div
+                                            key={idx}
+                                            onClick={() => {
+                                                onDiskSelect(isActive ? null : disk);
+                                                setShowDisks(false);
+                                            }}
+                                            className={`px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800 border-b last:border-0 border-zinc-100 dark:border-zinc-800/50 flex flex-col gap-1.5 cursor-pointer transition-colors ${isActive ? 'bg-blue-50/50 dark:bg-blue-900/10 border-l-2 border-l-blue-500' : ''}`}
+                                        >
                                             <div className="flex justify-between items-center w-full">
                                                 <div className="flex gap-1.5 items-center">
                                                     <HardDrive size={12} className={disk.is_removable ? "text-orange-500" : "text-blue-500"} />
@@ -164,7 +174,6 @@ export const StatusBar = () => {
                         </div>
                     )}
                 </div>
-
             </div>
         </div>
     );

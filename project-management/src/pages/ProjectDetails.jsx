@@ -1,7 +1,7 @@
 // src/pages/ProjectDetails.jsx
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ChevronLeft, Folder, FolderOpen, File, GitBranch, GitCommit, ExternalLink, Sun, Moon } from "lucide-react";
+import { Folder, FolderOpen, File, GitBranch } from "lucide-react";
 import { useTheme } from "../context/themeContext";
 import { ProjectService } from "../services/projectService";
 import { GitService } from "../services/gitService";
@@ -14,7 +14,7 @@ import { IdeNotFoundModal } from "../components/IdeNotFoundModal";
 import { GitCheckoutErrorModal } from "../components/GitCheckoutErrorModal";
 import { GitSetupWizard } from "../components/GitSetupWizard";
 import { GitStatusModal } from "../components/GitStatusModal";
-import { open } from "@tauri-apps/plugin-shell";
+import { ProjectHeader } from "../components/ProjectHeader";
 
 // Recursive olarak Ağaç Yapısını Çizen Component
 const FileNodeItem = ({ node }) => {
@@ -56,10 +56,10 @@ const FileNodeItem = ({ node }) => {
 
 
 
-export const ProjectDetails = () => {
+export const ProjectDetails = ({ selectedAvatar }) => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { theme, toggleTheme } = useTheme();
+    const { theme } = useTheme();
 
     // React Router navigate state üzerinden projemizi yakalıyoruz
     const project = location.state?.project;
@@ -190,61 +190,14 @@ export const ProjectDetails = () => {
     return (
         <div className="min-h-screen bg-zinc-50 dark:bg-[#09090b] flex flex-col font-sans transition-colors duration-200">
 
-            {/* Detay Header'ı */}
-            <header className="h-16 flex items-center px-6 border-b border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md sticky top-0 z-10 shrink-0">
-                <div className="flex justify-between items-center w-full">
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => navigate("/")}
-                            className="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors"
-                        >
-                            <ChevronLeft size={24} />
-                        </button>
-                        <div>
-                            <h1 className="text-lg font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
-                                {project.custom_name || project.name}
-                                {project.is_git && (
-                                    <span className="text-[10px] bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-500/20 uppercase">
-                                        Git Repo
-                                    </span>
-                                )}
-                            </h1>
-                            <p className="text-xs text-zinc-500 truncate max-w-lg">{project.path}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {project.is_git && gitDetails?.remote_url && (
-                            <button
-                                onClick={() => open(gitDetails.remote_url)}
-                                className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border border-transparent rounded-lg text-sm font-medium transition-colors cursor-pointer hover:opacity-90"
-                                title="Github'da Gör"
-                            >
-                                <ExternalLink size={16} /> Git Sayfası
-                            </button>
-                        )}
-                        <button
-                            onClick={handleOpenExplorer}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm font-medium transition-colors cursor-pointer"
-                            title="Dosya Gezgini'nde Aç"
-                        >
-                            <FolderOpen size={16} /> Göster
-                        </button>
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg text-sm font-medium transition-colors"
-                        >
-                            <ExternalLink size={16} /> Birlikte Aç
-                        </button>
-                        <button
-                            onClick={toggleTheme}
-                            className="p-2 mr-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors flex items-center justify-center"
-                            title="Temayı Değiştir"
-                        >
-                            {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
-                        </button>
-                    </div>
-                </div>
-            </header>
+            <ProjectHeader 
+                project={project}
+                selectedAvatar={selectedAvatar}
+                onBack={() => navigate("/")}
+                onOpenExplorer={handleOpenExplorer}
+                onOpenWith={() => setIsModalOpen(true)}
+                gitDetails={gitDetails}
+            />
 
             {/* Ana Gövde (Sol-Sağ Panel) */}
             <main className="flex-1 flex overflow-hidden">
