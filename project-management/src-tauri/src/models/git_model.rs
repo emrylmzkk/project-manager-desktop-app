@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+//fn yardimiyla return edilecekse serialize derive zorunludur !!
+
 #[derive(Serialize, Deserialize, Debug)]
 
 pub struct GitCommit {
@@ -23,4 +25,11 @@ pub struct GitDetails {
     pub recent_commits: Vec<GitCommit>,
     pub commit_activity: Vec<GitActivity>,
     pub remote_url: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "type", content = "data")]
+pub enum MergeResult {
+    Success(String),
+    Conflict(Vec<String>),
 }

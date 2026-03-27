@@ -40,6 +40,8 @@ fn main() {
             project_management_lib::commands::project_command::git_pull,
             project_management_lib::commands::project_command::git_fetch,
             project_management_lib::commands::project_command::git_clone,
+            project_management_lib::commands::project_command::git_merge,
+            project_management_lib::commands::project_command::get_conflicted_files,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

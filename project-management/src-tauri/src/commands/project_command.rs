@@ -1,4 +1,5 @@
 use crate::models::git_model::GitDetails;
+use crate::models::git_model::MergeResult;
 use crate::models::project_model::{FileNode, Project};
 use crate::services::git_service::GitService;
 use crate::services::project_service::ProjectService;
@@ -96,4 +97,14 @@ pub fn git_fetch(path: String) -> Result<String, String> {
 #[tauri::command]
 pub fn git_clone(target_path: String, url: String) -> Result<String, String> {
     GitService::git_clone(&target_path, &url)
+}
+
+#[tauri::command]
+pub fn git_merge(path: String, branch_name: String) -> Result<MergeResult, String> {
+    GitService::git_merge(&path, &branch_name)
+}
+
+#[tauri::command]
+pub fn get_conflicted_files(path: String) -> Result<Vec<String>, String> {
+    GitService::get_conflicted_files(&path)
 }

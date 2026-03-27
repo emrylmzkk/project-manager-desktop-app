@@ -1,7 +1,7 @@
 // src/pages/ProjectDetails.jsx
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Folder, FolderOpen, File, GitBranch } from "lucide-react";
+import { Folder, FolderOpen, File, GitBranch, GitMerge as GitMergeIcon, ExternalLink } from "lucide-react";
 import { useTheme } from "../context/themeContext";
 import { ProjectService } from "../services/projectService";
 import { GitService } from "../services/gitService";
@@ -15,12 +15,11 @@ import { GitCheckoutErrorModal } from "../components/GitCheckoutErrorModal";
 import { GitSetupWizard } from "../components/GitSetupWizard";
 import { GitStatusModal } from "../components/GitStatusModal";
 import { ProjectHeader } from "../components/ProjectHeader";
+import { GitMergeModal } from "../components/GitMergeModal";
 
 // Recursive olarak Ağaç Yapısını Çizen Component
 const FileNodeItem = ({ node }) => {
     const [isOpen, setIsOpen] = useState(false);
-
-    // Dosya türüne göre ikon seçimi (Basit bir mantık)
     const isCode = node.name.match(/\.(js|jsx|ts|tsx|rs|py|go|java|css|html|json|md)$/i);
 
     if (!node.is_dir) {
@@ -41,8 +40,6 @@ const FileNodeItem = ({ node }) => {
                 {isOpen ? <FolderOpen size={18} className="text-yellow-500" /> : <Folder size={18} className="text-yellow-500" />}
                 <span className="truncate">{node.name}</span>
             </div>
-
-            {/* Eğer klasör açıksa ve içinde child varsa onları kendi kendine (recursive) render et */}
             {isOpen && node.children && (
                 <div className="border-l border-zinc-200 dark:border-zinc-800 ml-2">
                     {node.children.map((childNode, i) => (
@@ -54,14 +51,9 @@ const FileNodeItem = ({ node }) => {
     );
 };
 
-
-
 export const ProjectDetails = ({ selectedAvatar }) => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { theme } = useTheme();
-
-    // React Router navigate state üzerinden projemizi yakalıyoruz
     const project = location.state?.project;
 
     const [fileTree, setFileTree] = useState([]);
@@ -73,6 +65,7 @@ export const ProjectDetails = ({ selectedAvatar }) => {
     const [checkoutErrorData, setCheckoutErrorData] = useState(null);
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [statusOutput, setStatusOutput] = useState("");
+    const [mergeResult, setMergeResult] = useState(null);
 
     const getIdeDisplayName = (ideId) => {
         const ides = {
@@ -86,37 +79,25 @@ export const ProjectDetails = ({ selectedAvatar }) => {
 
     const handleOpenInIde = async (ideId) => {
         const success = await ProjectService.openInIde(project.path, ideId);
-        if (!success) {
-            setNotFoundIdeName(getIdeDisplayName(ideId));
-        }
+        if (!success) setNotFoundIdeName(getIdeDisplayName(ideId));
     };
 
     const handleOpenExplorer = async () => {
         await ProjectService.openInExplorer(project.path);
     };
 
-    // Component render olunca tetiklenir
     useEffect(() => {
-        // Sayfa direk /project url'i ile (proje datasız) açılmışsa geriye at
         if (!project) {
             navigate("/");
             return;
         }
-
         const loadData = async () => {
             setLoading(true);
-            // Backend'den (Rust) klasör ağacını çekiyoruz
             const tree = await ProjectService.getFileTree(project.path);
             setFileTree(tree);
-
-            // Sadece proje bir .git klasörüyse git commit'lerini çekiyoruz
-            if (project.is_git) {
-                await fetchGitData();
-            }
-
+            if (project.is_git) await fetchGitData();
             setLoading(false);
         };
-
         loadData();
     }, [project, navigate]);
 
@@ -131,7 +112,7 @@ export const ProjectDetails = ({ selectedAvatar }) => {
                 await GitService.gitCommit(project.path, message);
                 alert("Başarıyla commit atıldı!");
                 setIsCommitModalOpen(false);
-                fetchGitData(); // Verileri yenile
+                fetchGitData();
             } catch (error) {
                 alert("Git commit başarısız: " + error);
             }
@@ -143,13 +124,29 @@ export const ProjectDetails = ({ selectedAvatar }) => {
         setLoading(true);
         try {
             await GitService.gitCheckout(project.path, branchName);
-            await fetchGitData(); // Update history and UI after switching branch
+            await fetchGitData();
         } catch (err) {
             if (err.includes("overwritten by checkout")) {
                 setCheckoutErrorData({ targetBranch: branchName });
             } else {
                 alert("Branch değiştirilirken hata: " + err);
             }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGitMerge = async (branchName) => {
+        if (branchName === gitDetails?.current_branch) return;
+        setLoading(true);
+        try {
+            const result = await GitService.gitMerge(project.path, branchName);
+            setMergeResult(result);
+            if (result.type === "Success") {
+                await fetchGitData();
+            }
+        } catch (error) {
+            alert("Merge işlemi başarısız: " + error);
         } finally {
             setLoading(false);
         }
@@ -189,7 +186,6 @@ export const ProjectDetails = ({ selectedAvatar }) => {
 
     return (
         <div className="min-h-screen bg-zinc-50 dark:bg-[#09090b] flex flex-col font-sans transition-colors duration-200">
-
             <ProjectHeader 
                 project={project}
                 selectedAvatar={selectedAvatar}
@@ -199,10 +195,7 @@ export const ProjectDetails = ({ selectedAvatar }) => {
                 gitDetails={gitDetails}
             />
 
-            {/* Ana Gövde (Sol-Sağ Panel) */}
             <main className="flex-1 flex overflow-hidden">
-
-                {/* SOL PANEL: Dosya Ağacı */}
                 <ScrollArea as="aside" className="w-1/3 min-w-[300px] max-w-sm border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 p-4">
                     <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-4 flex items-center gap-2">
                         <Folder size={16} /> Proje Dosyaları
@@ -220,7 +213,6 @@ export const ProjectDetails = ({ selectedAvatar }) => {
                     )}
                 </ScrollArea>
 
-                {/* SAĞ PANEL: Git Detayları (Veya Placeholder) */}
                 <ScrollArea as="section" className="flex-1 p-8 bg-white dark:bg-[#09090b]">
                     {!project.is_git ? (
                         <GitSetupWizard
@@ -234,8 +226,6 @@ export const ProjectDetails = ({ selectedAvatar }) => {
                         <div className="text-center py-20 text-zinc-500 animate-pulse">Git verileri yükleniyor...</div>
                     ) : gitDetails ? (
                         <div className="max-w-4xl mx-auto space-y-8">
-
-                            {/* Info Card: Aktif Branch */}
                             <div className="p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/10 dark:to-indigo-900/10 border border-blue-100 dark:border-blue-900/30 flex items-center justify-between">
                                 <div>
                                     <h3 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">Şu Anki Branch</h3>
@@ -244,8 +234,6 @@ export const ProjectDetails = ({ selectedAvatar }) => {
                                         <span className="text-2xl font-mono font-bold text-zinc-800 dark:text-zinc-100">{gitDetails.current_branch}</span>
                                     </div>
                                 </div>
-
-                                {/* Son atılan commit kısa özeti (Varsa) */}
                                 {gitDetails.recent_commits && gitDetails.recent_commits.length > 0 && (
                                     <div className="hidden md:block text-right">
                                         <p className="text-xs text-zinc-500 dark:text-zinc-400 uppercase font-bold tracking-wider mb-1">Son Commit</p>
@@ -254,19 +242,16 @@ export const ProjectDetails = ({ selectedAvatar }) => {
                                 )}
                             </div>
 
-                            {/* Aktivite Takvimi (Heatmap) ve Git Komutları */}
                             <GitDashboard
                                 project={project}
                                 gitDetails={gitDetails}
                                 fetchGitData={fetchGitData}
                                 onCommitOpen={() => setIsCommitModalOpen(true)}
                                 onStatusOpen={handleOpenStatus}
+                                onMerge={handleGitMerge}
                             />
 
-                            {/* İki Kolonlu Alt Kısım */}
                             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-
-                                {/* Branch'ler (1 Kolon) */}
                                 <div className="xl:col-span-1 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden bg-white dark:bg-zinc-900/50">
                                     <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900">
                                         <h3 className="text-sm font-semibold flex items-center gap-2 text-zinc-800 dark:text-zinc-200">
@@ -277,74 +262,48 @@ export const ProjectDetails = ({ selectedAvatar }) => {
                                         {gitDetails.branches.map((b, i) => {
                                             const isCurrent = b === gitDetails.current_branch;
                                             return (
-                                                <li
-                                                    key={i}
-                                                    onClick={() => handleSwitchBranch(b)}
-                                                    className={`py-2.5 px-3 rounded-lg flex items-center gap-2 ${isCurrent ? 'cursor-default bg-blue-50/50 dark:bg-blue-900/10' : 'cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/80 transition-colors'}`}
-                                                >
-                                                    {isCurrent ? (
-                                                        <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                                                    ) : (
-                                                        <span className="w-2 h-2 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>
+                                                <li key={i} className={`group py-2 px-3 rounded-lg flex items-center justify-between ${isCurrent ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/80 transition-all'}`}>
+                                                    <div className="flex items-center gap-2 truncate flex-1 cursor-pointer" onClick={() => handleSwitchBranch(b)}>
+                                                        {isCurrent ? <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shrink-0"></span> : <span className="w-2 h-2 rounded-full bg-zinc-300 dark:bg-zinc-700 shrink-0"></span>}
+                                                        <span className={`text-sm font-mono truncate ${isCurrent ? 'text-blue-700 dark:text-blue-400 font-bold' : 'text-zinc-600 dark:text-zinc-400'}`}>
+                                                            {b}
+                                                        </span>
+                                                    </div>
+                                                    {!isCurrent && (
+                                                        <button 
+                                                            onClick={() => handleGitMerge(b)}
+                                                            className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-md transition-all cursor-pointer flex items-center gap-1 text-[10px] font-bold uppercase tracking-tighter"
+                                                            title="Bu dalı şu anki dal içine birleştir (Merge)"
+                                                        >
+                                                            <GitMergeIcon size={14} /> Merge
+                                                        </button>
                                                     )}
-                                                    <span className={`text-sm font-mono ${isCurrent ? 'text-blue-700 dark:text-blue-400 font-medium' : 'text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-300'}`}>
-                                                        {b}
-                                                    </span>
                                                 </li>
                                             );
                                         })}
                                     </ul>
                                 </div>
-
-                                {/* Commit Akışı (Timeline) (2 Kolon) */}
                                 <div className="xl:col-span-2">
                                     <GitCommitTimeline commits={gitDetails.recent_commits} />
                                 </div>
                             </div>
-
                         </div>
                     ) : (
                         <div className="text-center py-20 text-red-500">Git verileri çekilirken bir sorun oluştu.</div>
                     )}
                 </ScrollArea>
-
             </main>
 
-            {/* Birlikte Aç Modalı */}
-            <OpenWithModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onOpenIn={handleOpenInIde}
-            />
-
-            {/* IDE Bulunamadı Modalı */}
-            <IdeNotFoundModal
-                isOpen={!!notFoundIdeName}
-                ideName={notFoundIdeName}
-                onClose={() => setNotFoundIdeName(null)}
-            />
-
-            {/* Git Checkout Error Modalı */}
-            <GitCheckoutErrorModal
-                isOpen={!!checkoutErrorData}
-                targetBranch={checkoutErrorData?.targetBranch}
-                onClose={() => setCheckoutErrorData(null)}
-                onStash={handleStashAndCheckout}
-                onOpenIde={handleOpenIdeFromError}
-            />
-
-            {/* Git Commit Modalı */}
-            <GitCommitModal
-                isOpen={isCommitModalOpen}
-                onClose={() => setIsCommitModalOpen(false)}
-                onCommit={submitCommit}
-            />
-
-            {/* Git Status Modalı */}
-            <GitStatusModal
-                isOpen={isStatusModalOpen}
-                statusOutput={statusOutput}
-                onClose={() => setIsStatusModalOpen(false)}
+            <OpenWithModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onOpenIn={handleOpenInIde} />
+            <IdeNotFoundModal isOpen={!!notFoundIdeName} ideName={notFoundIdeName} onClose={() => setNotFoundIdeName(null)} />
+            <GitCheckoutErrorModal isOpen={!!checkoutErrorData} targetBranch={checkoutErrorData?.targetBranch} onClose={() => setCheckoutErrorData(null)} onStash={handleStashAndCheckout} onOpenIde={handleOpenIdeFromError} />
+            <GitCommitModal isOpen={isCommitModalOpen} onClose={() => setIsCommitModalOpen(false)} onCommit={submitCommit} />
+            <GitStatusModal isOpen={isStatusModalOpen} statusOutput={statusOutput} onClose={() => setIsStatusModalOpen(false)} />
+            <GitMergeModal 
+                isOpen={!!mergeResult} 
+                onClose={() => setMergeResult(null)} 
+                result={mergeResult} 
+                onOpenWith={() => setIsModalOpen(true)}
             />
         </div>
     );

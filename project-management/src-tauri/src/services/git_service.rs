@@ -1,4 +1,4 @@
-use crate::models::git_model::{GitActivity, GitCommit, GitDetails};
+use crate::models::git_model::{GitActivity, GitCommit, GitDetails, MergeResult};
 use std::collections::HashMap;
 
 pub struct GitService;
@@ -344,4 +344,51 @@ impl GitService {
             Err(String::from_utf8_lossy(&output.stderr).trim().to_string())
         }
     }
+
+    pub fn git_merge(path: &str, branch_name: &str) -> Result<MergeResult, String> {
+        let output = crate::services::create_command("git")
+            .current_dir(path)
+            .args(["merge", branch_name])
+            .output()
+            .map_err(|e| e.to_string())?;
+
+        if output.status.success() {
+            let output_msg = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            return Ok(MergeResult::Success(output_msg));
+        }
+
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+
+        let is_conflict = stdout.contains("CONFLICT") || stderr.contains("Merge conflict");
+
+        if is_conflict {
+            let conflicted_files = Self::get_conflicted_files(path)?;
+            return Ok(MergeResult::Conflict(conflicted_files));
+        }
+
+        Err(stderr)
+    }
+
+    pub fn get_conflicted_files(path: &str) -> Result<Vec<String>, String> {
+        let output = crate::services::create_command("git")
+            .current_dir(path)
+            .args(["diff", "--name-only", "--diff-filter=U"])
+            .output()
+            .map_err(|e| e.to_string())?;
+
+        if output.status.success() {
+            let files = String::from_utf8_lossy(&output.stdout)
+                .lines()
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect();
+            Ok(files)
+        } else {
+            Ok(vec![])
+        }
+    }
+
+
+
 }

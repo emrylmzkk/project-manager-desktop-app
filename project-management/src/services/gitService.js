@@ -129,5 +129,19 @@ export const GitService = {
             console.error("Git status hatasi:", error);
             throw error;
         }
+    },
+
+    async gitMerge(path, branchName) {
+
+        try {
+
+            return await invoke("git_merge", { path, branchName })
+
+        } catch (error) {
+            console.error("Git merge hatasi", error);
+            throw error
+        }
+
+
     }
 }
