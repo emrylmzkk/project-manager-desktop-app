@@ -1,7 +1,7 @@
 // src/pages/ProjectDetails.jsx
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Folder, FolderOpen, File, GitBranch, GitMerge as GitMergeIcon, ExternalLink } from "lucide-react";
+import { Folder, FolderOpen, File, GitBranch, GitMerge as GitMergeIcon } from "lucide-react";
 import { useTheme } from "../context/themeContext";
 import { ProjectService } from "../services/projectService";
 import { GitService } from "../services/gitService";
@@ -16,6 +16,7 @@ import { GitSetupWizard } from "../components/GitSetupWizard";
 import { GitStatusModal } from "../components/GitStatusModal";
 import { ProjectHeader } from "../components/ProjectHeader";
 import { GitMergeModal } from "../components/GitMergeModal";
+import { AlertModal } from "../components/AlertModal";
 
 // Recursive olarak Ağaç Yapısını Çizen Component
 const FileNodeItem = ({ node }) => {
@@ -67,6 +68,12 @@ export const ProjectDetails = ({ selectedAvatar }) => {
     const [statusOutput, setStatusOutput] = useState("");
     const [mergeResult, setMergeResult] = useState(null);
 
+    // Alert Modal State
+    const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: "", message: "", type: "info" });
+    const showAlert = (message, title = "", type = "info") => {
+        setAlertConfig({ isOpen: true, title, message, type });
+    };
+
     const getIdeDisplayName = (ideId) => {
         const ides = {
             "vscode": "Visual Studio Code",
@@ -110,11 +117,11 @@ export const ProjectDetails = ({ selectedAvatar }) => {
         if (message) {
             try {
                 await GitService.gitCommit(project.path, message);
-                alert("Başarıyla commit atıldı!");
+                showAlert("Değişiklikler başarıyla commitlendi.", "Başarılı", "success");
                 setIsCommitModalOpen(false);
                 fetchGitData();
             } catch (error) {
-                alert("Git commit başarısız: " + error);
+                showAlert("Git commit işlemi sırasında bir hata oluştu: " + error, "Hata", "error");
             }
         }
     };
@@ -129,7 +136,7 @@ export const ProjectDetails = ({ selectedAvatar }) => {
             if (err.includes("overwritten by checkout")) {
                 setCheckoutErrorData({ targetBranch: branchName });
             } else {
-                alert("Branch değiştirilirken hata: " + err);
+                showAlert("Branch değiştirme sırasında bir hata oluştu: " + err, "Hata", "error");
             }
         } finally {
             setLoading(false);
@@ -146,7 +153,7 @@ export const ProjectDetails = ({ selectedAvatar }) => {
                 await fetchGitData();
             }
         } catch (error) {
-            alert("Merge işlemi başarısız: " + error);
+            showAlert("Merge işlemi sırasında bir hata oluştu: " + error, "Hata", "error");
         } finally {
             setLoading(false);
         }
@@ -161,7 +168,7 @@ export const ProjectDetails = ({ selectedAvatar }) => {
             setCheckoutErrorData(null);
             await fetchGitData();
         } catch (err) {
-            alert("İşlem sırasında hata: " + err);
+            showAlert("Stash/Checkout işlemi sırasında hata: " + err, "Hata", "error");
         } finally {
             setLoading(false);
         }
@@ -178,7 +185,7 @@ export const ProjectDetails = ({ selectedAvatar }) => {
             setStatusOutput(output);
             setIsStatusModalOpen(true);
         } catch (error) {
-            alert("Git status alınamadı: " + error);
+            showAlert("Git status alınırken bir hata oluştu: " + error, "Hata", "error");
         }
     };
 
@@ -186,7 +193,7 @@ export const ProjectDetails = ({ selectedAvatar }) => {
 
     return (
         <div className="min-h-screen bg-zinc-50 dark:bg-[#09090b] flex flex-col font-sans transition-colors duration-200">
-            <ProjectHeader 
+            <ProjectHeader
                 project={project}
                 selectedAvatar={selectedAvatar}
                 onBack={() => navigate("/")}
@@ -249,6 +256,7 @@ export const ProjectDetails = ({ selectedAvatar }) => {
                                 onCommitOpen={() => setIsCommitModalOpen(true)}
                                 onStatusOpen={handleOpenStatus}
                                 onMerge={handleGitMerge}
+                                showAlert={showAlert}
                             />
 
                             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -270,7 +278,7 @@ export const ProjectDetails = ({ selectedAvatar }) => {
                                                         </span>
                                                     </div>
                                                     {!isCurrent && (
-                                                        <button 
+                                                        <button
                                                             onClick={() => handleGitMerge(b)}
                                                             className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-md transition-all cursor-pointer flex items-center gap-1 text-[10px] font-bold uppercase tracking-tighter"
                                                             title="Bu dalı şu anki dal içine birleştir (Merge)"
@@ -299,11 +307,18 @@ export const ProjectDetails = ({ selectedAvatar }) => {
             <GitCheckoutErrorModal isOpen={!!checkoutErrorData} targetBranch={checkoutErrorData?.targetBranch} onClose={() => setCheckoutErrorData(null)} onStash={handleStashAndCheckout} onOpenIde={handleOpenIdeFromError} />
             <GitCommitModal isOpen={isCommitModalOpen} onClose={() => setIsCommitModalOpen(false)} onCommit={submitCommit} />
             <GitStatusModal isOpen={isStatusModalOpen} statusOutput={statusOutput} onClose={() => setIsStatusModalOpen(false)} />
-            <GitMergeModal 
-                isOpen={!!mergeResult} 
-                onClose={() => setMergeResult(null)} 
-                result={mergeResult} 
+            <GitMergeModal
+                isOpen={!!mergeResult}
+                onClose={() => setMergeResult(null)}
+                result={mergeResult}
                 onOpenWith={() => setIsModalOpen(true)}
+            />
+            <AlertModal
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
             />
         </div>
     );

@@ -1,13 +1,14 @@
 // src/pages/Home.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProjectService } from "../services/projectService";
 import { Header } from "../components/header";
 import { ProjectList } from "../components/projectList";
 import { RemoveProjectModal } from "../components/RemoveProjectModal";
 import { AddProjectModal } from "../components/AddProjectModa";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { GitCloneModal } from "../components/GitCloneModal";
+import { AlertModal } from "../components/AlertModal";
 
 export const Home = ({ selectedAvatar, onAvatarSelect, selectedDisk, allDisks = [] }) => {
     const [projects, setProjects] = useState(() => {
@@ -21,6 +22,12 @@ export const Home = ({ selectedAvatar, onAvatarSelect, selectedDisk, allDisks = 
     const [searchQuery, setSearchQuery] = useState("");
     const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
 
+    // Alert Modal State
+    const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: "", message: "", type: "info" });
+    const showAlert = (message, title = "", type = "info") => {
+        setAlertConfig({ isOpen: true, title, message, type });
+    };
+
     useEffect(() => {
         localStorage.setItem("my_projects", JSON.stringify(projects));
     }, [projects]);
@@ -33,7 +40,7 @@ export const Home = ({ selectedAvatar, onAvatarSelect, selectedDisk, allDisks = 
         const path = await ProjectService.selectDirectory();
         if (!path) return;
         if (projects.some(p => p.path === path)) {
-            alert("Bu klasör zaten ekli");
+            showAlert("Bu klasör zaten listenizde bulunuyor.", "Zaten Ekli", "warning");
             return;
         }
         setLoading(true);
@@ -54,7 +61,7 @@ export const Home = ({ selectedAvatar, onAvatarSelect, selectedDisk, allDisks = 
             const projectData = await ProjectService.addProject(targetPath);
             if (projectData) setProjects(prev => [...prev, projectData]);
         } catch (error) {
-            alert("Proje eklenemedi: " + error.message);
+            showAlert("Proje listeye eklenirken bir hata oluştu: " + error.message, "Hata", "error");
         } finally {
             setLoading(false);
             setIsCloneModalOpen(false);
@@ -70,7 +77,7 @@ export const Home = ({ selectedAvatar, onAvatarSelect, selectedDisk, allDisks = 
             const existing = new Set(prev.map(p => p.path));
             const newOnes = discoveredPath.filter(p => !existing.has(p.path));
             if (newOnes.length === 0) {
-                alert("Seçilen projeler zaten listede");
+                showAlert("Seçilen projeler zaten listede bulunuyor.", "Zaten Ekli", "info");
                 return prev;
             }
             return [...prev, ...newOnes];
@@ -121,14 +128,20 @@ export const Home = ({ selectedAvatar, onAvatarSelect, selectedDisk, allDisks = 
     };
 
     const handleReorder = (newOrder) => {
+        if (!newOrder || newOrder.length === 0) return;
+
         setProjects(prev => {
             const itemPaths = new Set(newOrder.map(p => p.path));
-            const indices = [];
+            const indices = []; // Orijinal listedeki pozisyonları
+
             prev.forEach((p, i) => {
                 if (itemPaths.has(p.path)) indices.push(i);
             });
 
+            if (indices.length === 0) return prev;
+
             const next = [...prev];
+            // Yeni sıralamadaki her bir öğeyi orijinal indekslerine sırayla yerleştir
             indices.forEach((originalIndex, i) => {
                 next[originalIndex] = newOrder[i];
             });
@@ -136,55 +149,69 @@ export const Home = ({ selectedAvatar, onAvatarSelect, selectedDisk, allDisks = 
         });
     };
 
-    const filteredProjects = projects.filter(p => {
-        // Arama filtresi
-        const query = searchQuery.toLowerCase();
-        const searchName = p.custom_name ? p.custom_name.toLowerCase() : p.name.toLowerCase();
-        const matchesSearch = !query || searchName.includes(query) || p.path.toLowerCase().includes(query);
-
-        // Disk filtresi (Favoriler muaftır, hep gözükür)
-        let matchesDisk = true;
-        if (selectedDisk && !p.is_favorite) {
+    // Filtreleme Mantığı
+    const filteredProjects = useMemo(() => {
+        return projects.filter(p => {
+            // Text Filtreleme
+            const query = searchQuery.toLowerCase().trim();
+            const projectName = (p.custom_name || p.name).toLowerCase();
             const projectPath = p.path.toLowerCase();
-            const selectedMount = selectedDisk.mount_point.toLowerCase();
+            const matchesSearch = !query || projectName.includes(query) || projectPath.includes(query);
 
-            // Sadece bu diskin mount_point'i mi başlıyor? Her disk için kontrol et.
-            // Bu projenin aslında hangi diske ait olduğunu bul (en uzun eşleşen mount point)
-            const bestDiskMatch = allDisks.reduce((best, current) => {
-                const currentMount = current.mount_point.toLowerCase();
-                if (projectPath.startsWith(currentMount)) {
-                    if (!best || currentMount.length > best.mount_point.toLowerCase().length) {
-                        return current;
+            // Disk Filtreleme
+            let matchesDisk = true;
+            if (selectedDisk && !p.is_favorite) {
+                const selectedMount = selectedDisk.mount_point.toLowerCase();
+
+                // Projenin en iyi eşleşen diskini bul
+                const bestDiskMatch = allDisks.reduce((best, disk) => {
+                    const mount = disk.mount_point.toLowerCase();
+                    if (projectPath.startsWith(mount)) {
+                        if (!best || mount.length > best.mount_point.toLowerCase().length) {
+                            return disk;
+                        }
                     }
+                    return best;
+                }, null);
+
+                if (bestDiskMatch) {
+                    matchesDisk = bestDiskMatch.mount_point.toLowerCase() === selectedMount;
+                } else if (selectedMount !== "/" && selectedMount !== "/Volumes/Macintosh HD") {
+                    matchesDisk = false;
                 }
-                return best;
-            }, null);
+            }
 
-            matchesDisk = bestDiskMatch?.mount_point.toLowerCase() === selectedMount;
-        }
-
-        return matchesSearch && matchesDisk;
-    });
+            return matchesSearch && matchesDisk;
+        });
+    }, [projects, searchQuery, selectedDisk, allDisks]);
 
     return (
         <div className="min-h-screen bg-zinc-50 dark:bg-[#121212] transition-colors duration-200 font-sans">
-            <Header 
-                onSelectFolder={handleSelectFolder} 
-                selectedAvatar={selectedAvatar} 
-                onAvatarSelect={onAvatarSelect} 
+            <Header
+                onSelectFolder={handleSelectFolder}
+                selectedAvatar={selectedAvatar}
+                onAvatarSelect={onAvatarSelect}
             />
 
             <div className="px-8 pb-8">
                 <div className="mb-6 flex gap-3 mt-4 justify-center">
-                    <div className="relative flex-1 max-w-lg">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                    <div className="relative flex-1 max-w-lg group">
+                        <Search className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${searchQuery ? "text-blue-500" : "text-zinc-400"}`} size={18} />
                         <input
                             type="text"
                             placeholder="Proje ara..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 pl-10 pr-4 text-sm outline-none focus:border-blue-500 transition-colors dark:text-zinc-100 shadow-sm"
+                            className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl py-3 pl-11 pr-4 text-sm outline-none focus:border-blue-500 transition-all dark:text-zinc-100 shadow-sm"
                         />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery("")}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-400 hover:text-red-500 transition-colors cursor-pointer"
+                            >
+                                <X size={14} />
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -202,7 +229,7 @@ export const Home = ({ selectedAvatar, onAvatarSelect, selectedDisk, allDisks = 
                     onClose={() => setIsCloneModalOpen(false)}
                     onSuccess={handleCloneSuccess}
                 />
-                
+
                 <ProjectList
                     projects={filteredProjects}
                     loading={loading}
@@ -220,6 +247,14 @@ export const Home = ({ selectedAvatar, onAvatarSelect, selectedDisk, allDisks = 
                     project={projectToRemove}
                     onClose={() => setProjectToRemove(null)}
                     onConfirm={handleRemoveProject}
+                />
+
+                <AlertModal
+                    isOpen={alertConfig.isOpen}
+                    onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+                    title={alertConfig.title}
+                    message={alertConfig.message}
+                    type={alertConfig.type}
                 />
             </div>
         </div>

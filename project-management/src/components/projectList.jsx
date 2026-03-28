@@ -89,9 +89,9 @@ export const ProjectList = ({
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-4">
-                    <FolderCode size={24} className="text-zinc-400" />
+                    <FolderCode size={24} className="text-zinc-400 opacity-50" />
                 </div>
-                <p className="text-zinc-500 dark:text-zinc-400 font-medium">
+                <p className="text-zinc-500 dark:text-zinc-400 font-medium italic">
                     Filtrenize uygun proje bulunamadı
                 </p>
             </div>
@@ -108,21 +108,27 @@ export const ProjectList = ({
         if (active && over && active.id !== over.id) {
             const oldIndex = items.findIndex(item => item.path === active.id);
             const newIndex = items.findIndex(item => item.path === over.id);
-            const newOrder = arrayMove(items, oldIndex, newIndex);
-            onReorderItems(newOrder);
+            
+            if (newIndex !== -1) {
+                const newOrder = arrayMove(items, oldIndex, newIndex);
+                onReorderItems(newOrder);
+            }
         }
     };
 
     const renderList = (items, onReorderItems, title, icon) => (
-        <div className="mb-12 last:mb-0">
-            <div className="flex items-center gap-2 mb-4 px-1">
-                <div className={`${title === "Favoriler" ? "text-amber-500" : "text-zinc-400"}`}>
+        <div className="mb-14 last:mb-0">
+            <div className="flex items-center gap-2 mb-6 px-1">
+                <div className={`${title === "Favoriler" ? "text-amber-500" : "text-blue-500"} p-2 bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-zinc-100 dark:border-zinc-800`}>
                     {icon}
                 </div>
-                <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
-                    {title} <span className="ml-2 text-[10px] opacity-60">({items.length})</span>
-                </h2>
-                <div className="flex-1 h-[1px] bg-zinc-200 dark:bg-zinc-800 ml-2 opacity-30"></div>
+                <div>
+                    <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                        {title}
+                    </h2>
+                    <p className="text-[10px] text-zinc-400 font-medium uppercase">{items.length} PROJE</p>
+                </div>
+                <div className="flex-1 h-[1px] bg-gradient-to-r from-zinc-200 dark:from-zinc-800 to-transparent ml-4 opacity-50"></div>
             </div>
 
             <DndContext
@@ -134,7 +140,7 @@ export const ProjectList = ({
                     items={items.map(p => p.path)}
                     strategy={rectSortingStrategy}
                 >
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <AnimatePresence initial={false}>
                             {items.map((project) => (
                                 <SortableProject
@@ -155,7 +161,7 @@ export const ProjectList = ({
     );
 
     return (
-        <main className="pb-10">
+        <main className="pb-10 pt-4">
             {favorites.length > 0 && renderList(
                 favorites,
                 (newOrder) => onReorder(newOrder, true),
