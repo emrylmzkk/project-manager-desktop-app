@@ -1,7 +1,7 @@
 // src/pages/ProjectDetails.jsx
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Folder, FolderOpen, File, GitBranch, GitMerge as GitMergeIcon } from "lucide-react";
+import { Folder, FolderOpen, File, GitBranch, GitMerge as GitMergeIcon, LayoutGrid, ChevronLeft, ChevronRight } from "lucide-react";
 import { useTheme } from "../context/themeContext";
 import { ProjectService } from "../services/projectService";
 import { GitService } from "../services/gitService";
@@ -17,6 +17,7 @@ import { GitStatusModal } from "../components/GitStatusModal";
 import { ProjectHeader } from "../components/ProjectHeader";
 import { GitMergeModal } from "../components/GitMergeModal";
 import { AlertModal } from "../components/AlertModal";
+import { ProjectSidebar } from "../components/ProjectSidebar";
 
 // Recursive olarak Ağaç Yapısını Çizen Component
 const FileNodeItem = ({ node }) => {
@@ -93,6 +94,8 @@ export const ProjectDetails = ({ selectedAvatar }) => {
         await ProjectService.openInExplorer(project.path);
     };
 
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
     useEffect(() => {
         if (!project) {
             navigate("/");
@@ -159,12 +162,12 @@ export const ProjectDetails = ({ selectedAvatar }) => {
         }
     };
 
-    const handleStashAndCheckout = async () => {
-        if (!checkoutErrorData) return;
+    const handleStashAndCheckout = async (targetBranch) => {
+        if (!targetBranch) return;
         setLoading(true);
         try {
             await GitService.gitStash(project.path);
-            await GitService.gitCheckout(project.path, checkoutErrorData.targetBranch);
+            await GitService.gitCheckout(project.path, targetBranch);
             setCheckoutErrorData(null);
             await fetchGitData();
         } catch (err) {
@@ -192,7 +195,7 @@ export const ProjectDetails = ({ selectedAvatar }) => {
     if (!project) return null;
 
     return (
-        <div className="min-h-screen bg-zinc-50 dark:bg-[#09090b] flex flex-col font-sans transition-colors duration-200">
+        <div className="min-h-screen bg-zinc-50 dark:bg-[#09090b] flex flex-col font-sans transition-colors duration-200 overflow-hidden relative">
             <ProjectHeader
                 project={project}
                 selectedAvatar={selectedAvatar}
@@ -221,6 +224,15 @@ export const ProjectDetails = ({ selectedAvatar }) => {
                 </ScrollArea>
 
                 <ScrollArea as="section" className="flex-1 p-8 bg-white dark:bg-[#09090b]">
+                    {/* Fixed Toggle Tab for Side Panel on the Right Edge */}
+                    <button
+                        onClick={() => setIsSidebarOpen(true)}
+                        className="fixed right-0 top-1/2 -translate-y-1/2 z-30 p-2 pr-1 bg-zinc-900 dark:bg-zinc-800 text-white dark:text-zinc-100 rounded-l-2xl shadow-2xl hover:translate-x-[-4px] active:scale-95 transition-all flex items-center border-y border-l border-white/10 group"
+                        title="Proje Panosunu Aç"
+                    >
+                        <ChevronLeft size={24} className="group-hover:scale-110 transition-transform" />
+                    </button>
+
                     {!project.is_git ? (
                         <GitSetupWizard
                             project={project}
@@ -300,6 +312,13 @@ export const ProjectDetails = ({ selectedAvatar }) => {
                         <div className="text-center py-20 text-red-500">Git verileri çekilirken bir sorun oluştu.</div>
                     )}
                 </ScrollArea>
+
+                {/* Side Panel (Drawer) Dashboard */}
+                <ProjectSidebar
+                    projectPath={project.path}
+                    isOpen={isSidebarOpen}
+                    onClose={() => setIsSidebarOpen(false)}
+                />
             </main>
 
             <OpenWithModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onOpenIn={handleOpenInIde} />

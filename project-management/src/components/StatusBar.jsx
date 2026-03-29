@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Monitor, User, Cpu, MemoryStick, HardDrive, ChevronUp } from "lucide-react";
 import { useTheme } from "../context/themeContext";
 
-const APP_VERSION = "v1.1.7";
+const APP_VERSION = "v1.2.0";
 
 export const StatusBar = ({ selectedAvatar, selectedDisk, onDiskSelect, systemInfo }) => {
     const { theme } = useTheme();

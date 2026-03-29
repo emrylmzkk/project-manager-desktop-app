@@ -14,10 +14,20 @@ fn greet_from_rust(name: &str) -> String {
     ProjectManager::get_welcome_message(name)
 }
 
+use tauri::Manager;
+use project_management_lib::services::db_service::{DbService, DbState};
+use std::sync::Mutex;
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
+        .setup(|app| {
+            let handle = app.handle();
+            let conn = DbService::init(handle).expect("Failed to initialize database");
+            app.manage(DbState(Mutex::new(conn)));
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             greet_from_rust,
             project_management_lib::commands::project_command::scan_directory,
@@ -42,6 +52,15 @@ fn main() {
             project_management_lib::commands::project_command::git_clone,
             project_management_lib::commands::project_command::git_merge,
             project_management_lib::commands::project_command::get_conflicted_files,
+            project_management_lib::commands::todo_command::get_todos,
+            project_management_lib::commands::todo_command::add_todo,
+            project_management_lib::commands::todo_command::toggle_todo,
+            project_management_lib::commands::todo_command::update_todo_order,
+            project_management_lib::commands::todo_command::delete_todo,
+            project_management_lib::commands::note_command::get_project_notes,
+            project_management_lib::commands::note_command::add_project_note,
+            project_management_lib::commands::note_command::update_project_note,
+            project_management_lib::commands::note_command::delete_project_note,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
