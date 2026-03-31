@@ -14,9 +14,9 @@ fn greet_from_rust(name: &str) -> String {
     ProjectManager::get_welcome_message(name)
 }
 
-use tauri::Manager;
 use project_management_lib::services::db_service::{DbService, DbState};
 use std::sync::Mutex;
+use tauri::Manager;
 
 fn main() {
     tauri::Builder::default()
@@ -61,6 +61,7 @@ fn main() {
             project_management_lib::commands::note_command::add_project_note,
             project_management_lib::commands::note_command::update_project_note,
             project_management_lib::commands::note_command::delete_project_note,
+            project_management_lib::commands::project_template_command::create_project_from_template,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

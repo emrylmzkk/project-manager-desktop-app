@@ -91,5 +91,18 @@ export const ProjectService = {
             console.error("Birden fazla proje eklenirken hata meydana geldi", error)
             return []
         }
+    },
+
+    async createProjectFromTemplate(templateId, path, projectName) {
+        try {
+            return await invoke("create_project_from_template", {
+                templateId,
+                path,
+                projectName
+            });
+        } catch (error) {
+            console.error("Template'den proje oluşturulurken hata:", error);
+            throw error;
+        }
     }
 };

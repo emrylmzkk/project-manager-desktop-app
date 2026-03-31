@@ -5,7 +5,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { SvgIcon } from "./SvgIcon";
 import { AvatarPickerModal, PixelChar, ANIMS } from "./icons/AvatarPickerModal";
 
-export const Header = ({ onSelectFolder, selectedAvatar, onAvatarSelect }) => {
+export const Header = ({ onSelectFolder, selectedAvatar, onAvatarSelect, onOpenTemplates }) => {
     const { theme, toggleTheme } = useTheme();
     const [osName, setOsName] = useState("");
     const [modalOpen, setModalOpen] = useState(false);
@@ -74,6 +74,12 @@ export const Header = ({ onSelectFolder, selectedAvatar, onAvatarSelect }) => {
             </div>
 
             <div className="flex items-center gap-3">
+                <button
+                    onClick={onOpenTemplates}
+                    className="px-4 py-2 bg-amber-500 hover:bg-amber-600 dark:bg-orange-600 dark:hover:bg-orange-500 text-white rounded-lg transition-all shadow-lg text-sm font-medium hover:scale-105 active:scale-95"
+                >
+                    Template'ler
+                </button>
                 <button
                     onClick={onSelectFolder}
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all shadow-lg shadow-blue-900/20 text-sm font-medium"

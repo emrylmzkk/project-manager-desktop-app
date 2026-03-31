@@ -388,7 +388,4 @@ impl GitService {
             Ok(vec![])
         }
     }
-
-
-
 }

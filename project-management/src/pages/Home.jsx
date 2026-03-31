@@ -9,6 +9,7 @@ import { AddProjectModal } from "../components/AddProjectModa";
 import { Search, X } from "lucide-react";
 import { GitCloneModal } from "../components/GitCloneModal";
 import { AlertModal } from "../components/AlertModal";
+import { ProjectTemplatesModal } from "../components/ProjectTemplatesModal";
 
 export const Home = ({ selectedAvatar, onAvatarSelect, selectedDisk, allDisks = [] }) => {
     const [projects, setProjects] = useState(() => {
@@ -21,6 +22,7 @@ export const Home = ({ selectedAvatar, onAvatarSelect, selectedDisk, allDisks = 
     const [isAddModelOpen, setIsAddModelOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
+    const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false);
 
     // Alert Modal State
     const [alertConfig, setAlertConfig] = useState({ isOpen: false, title: "", message: "", type: "info" });
@@ -65,6 +67,26 @@ export const Home = ({ selectedAvatar, onAvatarSelect, selectedDisk, allDisks = 
         } finally {
             setLoading(false);
             setIsCloneModalOpen(false);
+        }
+    }
+
+    const handleTemplateSuccess = async (newProjectPath) => {
+        setLoading(true);
+        try {
+            // Yeni oluşturulan projeyi listeye ekle
+            const projectData = await ProjectService.addProject(newProjectPath);
+            if (projectData) {
+                setProjects(prev => {
+                    if (prev.some(p => p.path === projectData.path)) return prev;
+                    return [...prev, projectData];
+                });
+                showAlert("Proje başarıyla oluşturuldu ve listeye eklendi.", "Başarılı", "success");
+            }
+        } catch (error) {
+            showAlert("Proje listeye eklenirken bir hata oluştu: " + error.message, "Hata", "error");
+        } finally {
+            setLoading(false);
+            setIsTemplatesModalOpen(false);
         }
     }
 
@@ -191,6 +213,7 @@ export const Home = ({ selectedAvatar, onAvatarSelect, selectedDisk, allDisks = 
                 onSelectFolder={handleSelectFolder}
                 selectedAvatar={selectedAvatar}
                 onAvatarSelect={onAvatarSelect}
+                onOpenTemplates={() => setIsTemplatesModalOpen(true)}
             />
 
             <div className="px-8 pb-8">
@@ -228,6 +251,12 @@ export const Home = ({ selectedAvatar, onAvatarSelect, selectedDisk, allDisks = 
                     isOpen={isCloneModalOpen}
                     onClose={() => setIsCloneModalOpen(false)}
                     onSuccess={handleCloneSuccess}
+                />
+
+                <ProjectTemplatesModal
+                    isOpen={isTemplatesModalOpen}
+                    onClose={() => setIsTemplatesModalOpen(false)}
+                    onSuccess={handleTemplateSuccess}
                 />
 
                 <ProjectList
