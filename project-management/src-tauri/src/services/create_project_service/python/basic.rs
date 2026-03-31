@@ -1,10 +1,11 @@
 use std::fs;
 use std::path::Path;
+use crate::services::create_project_service::ProjectTemplate;
 
-pub struct PythonTemplateService;
+pub struct PythonBasicTemplate;
 
-impl PythonTemplateService {
-    pub fn create_new_project(path: &str, project_name: &str) -> Result<(), String> {
+impl ProjectTemplate for PythonBasicTemplate {
+    fn create(&self, path: &str, project_name: &str) -> Result<(), String> {
         let new_path = format!("{}/{}", path, project_name);
 
         Self::create_project_dir(&new_path)?;
@@ -13,7 +14,9 @@ impl PythonTemplateService {
 
         Ok(())
     }
+}
 
+impl PythonBasicTemplate {
     fn create_project_dir(new_path: &str) -> Result<(), String> {
         if Path::new(new_path).exists() {
             return Err(format!("Klasör zaten mevcut"));
@@ -59,7 +62,8 @@ impl PythonTemplateService {
         // src klasörünü oluştur
         fs::create_dir_all(&src_path).map_err(|e| format!("src klasörü oluşturulamadı: {}", e))?;
 
-        fs::write(&main_path, "").map_err(|e| format!("main.py dosyası oluşturulamadı: {}", e))?;
+        fs::write(&main_path, "print('Hello, Python!')")
+            .map_err(|e| format!("main.py dosyası oluşturulamadı: {}", e))?;
 
         // requirements.txt dosyasını oluştur
         let requirements_content = "";
@@ -67,7 +71,7 @@ impl PythonTemplateService {
             .map_err(|e| format!("requirements.txt dosyası oluşturulamadı: {}", e))?;
 
         // README.md dosyasını oluştur
-        let readme_content = "";
+        let readme_content = format!("# {}\n\nCreated with Project Manager", project_path.split('/').last().unwrap_or("Project"));
         fs::write(&readme_path, readme_content)
             .map_err(|e| format!("README.md dosyası oluşturulamadı: {}", e))?;
 

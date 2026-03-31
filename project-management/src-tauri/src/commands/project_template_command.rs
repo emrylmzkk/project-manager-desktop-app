@@ -1,4 +1,4 @@
-use crate::services::create_project_service::python_template::PythonTemplateService;
+use crate::services::create_project_service::TemplateFactory;
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -14,17 +14,14 @@ pub async fn create_project_from_template(
     path: String,
     project_name: String,
 ) -> Result<TemplateResponse, String> {
-    match template_id.as_str() {
-        "python" => {
-            PythonTemplateService::create_new_project(&path, &project_name)?;
-            let full_path = format!("{}/{}", path, project_name);
-            Ok(TemplateResponse {
-                success: true,
-                message: "Python projesi başarıyla oluşturuldu".to_string(),
-                path: full_path,
-            })
-        }
-        _ => Err(format!("Bilinmeyen template: {}", template_id)),
-    }
+    let template = TemplateFactory::get_template(&template_id)?;
+    template.create(&path, &project_name)?;
+
+    let full_path = format!("{}/{}", path, project_name);
+    Ok(TemplateResponse {
+        success: true,
+        message: format!("{} projesi başarıyla oluşturuldu", template_id),
+        path: full_path,
+    })
 }
 

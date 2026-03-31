@@ -3,13 +3,21 @@ import { X, Code, Terminal, Layout, Plus, Folder, AlertCircle, Loader2 } from 'l
 import { ProjectService } from '../services/projectService';
 import { TemplateCard } from './TemplateCard';
 import pythonLogo from "../assets/icons/python_logo.png";
+import fastapiLogo from "../assets/icons/fastapi_logo.png";
 
 const TEMPLATES = [
     {
         id: 'python',
-        name: 'Python Project',
+        name: 'Python (Basic)',
         description: 'Venv, requirements.txt, .gitignore ve src klasörü ile hazır bir Python çalışma alanı oluşturur.',
         icon: pythonLogo,
+        tags: []
+    },
+    {
+        id: 'fastapi',
+        name: 'Python (FastAPI)',
+        description: 'Uvicorn ve FastAPI kütüphaneleriyle hazır web uygulaması şablonu.',
+        icon: fastapiLogo,
         tags: []
     },
     // {

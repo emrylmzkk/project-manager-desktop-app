@@ -15,7 +15,7 @@ export const TemplateCard = ({ template, onSelect, isSelected }) => {
             <div className="flex items-center justify-center mb-4">
                 <div className={`
                     w-14 h-14 rounded-2xl transition-colors flex items-center justify-center overflow-hidden
-                    ${isSelected ? 'bg-blue-500 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 group-hover:text-blue-500'}
+                    bg-zinc-100 dark:bg-zinc-800 text-zinc-500 group-hover:text-blue-500
                 `}>
                     {typeof template.icon === 'string' ? (
                         <div className="p-2 w-full h-full flex items-center justify-center">
@@ -29,9 +29,7 @@ export const TemplateCard = ({ template, onSelect, isSelected }) => {
                         template.icon
                     )}
                 </div>
-                {isSelected && (
-                    <CheckCircle2 className="text-blue-500 animate-in zoom-in duration-300" size={24} />
-                )}
+
             </div>
 
             <h3 className="text-lg text-center font-bold text-zinc-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
